@@ -1,0 +1,2771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Companion to Introduction to Digital Filters — Julius O. Smith III</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false});"></script>
+<style>
+:root {
+  --bg: #0a0b0f;
+  --bg2: #12141c;
+  --bg3: #1a1d2a;
+  --fg: #d4d6e0;
+  --fg-dim: #8a8d9a;
+  --accent: #e8a44a;
+  --accent2: #4a9de8;
+  --accent3: #5ce89a;
+  --accent4: #e85a7a;
+  --accent5: #b06ae8;
+  --border: #2a2d3a;
+  --glow: rgba(232,164,74,0.15);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{background:var(--bg);color:var(--fg);font-family:'Palatino Linotype','Book Antiqua',Palatino,'Georgia',serif;line-height:1.75;overflow-x:hidden}
+::selection{background:var(--accent);color:var(--bg)}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s}
+a:hover{border-bottom-color:var(--accent)}
+
+header{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:2rem;position:relative;overflow:hidden}
+header canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;opacity:.45}
+header .content{position:relative;z-index:1;max-width:820px}
+header h1{font-size:clamp(1.9rem,4.6vw,3.3rem);font-weight:300;letter-spacing:.04em;color:var(--accent);text-shadow:0 0 60px rgba(232,164,74,.3);margin-bottom:.4em}
+header h1 em{font-style:italic;color:var(--fg);font-weight:400}
+header .subtitle{font-size:1.1rem;color:var(--fg-dim);max-width:680px;margin:0 auto 2em}
+header .people{display:flex;gap:1.4rem;justify-content:center;flex-wrap:wrap;margin-bottom:2em}
+header .people span{font-size:.9rem;color:var(--fg);padding:.4em 1em;border:1px solid var(--border);border-radius:2px;background:rgba(26,29,42,.7)}
+
+nav#toc{position:sticky;top:0;z-index:100;background:rgba(10,11,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:.6rem 1rem;overflow-x:auto;white-space:nowrap;text-align:center}
+nav#toc a{display:inline-block;font-size:.78rem;color:var(--fg-dim);padding:.3em .7em;margin:0 .05em;letter-spacing:.04em;text-transform:uppercase;font-family:'Lucida Console',Monaco,monospace;transition:color .2s;border-bottom:none}
+nav#toc a:hover,nav#toc a.active{color:var(--accent)}
+
+section{max-width:920px;margin:0 auto;padding:4rem 1.5rem;border-bottom:1px solid var(--border)}
+section:last-of-type{border-bottom:none}
+h2{font-size:clamp(1.5rem,3vw,2.2rem);font-weight:300;color:var(--accent);margin-bottom:.3em;letter-spacing:.03em}
+h2 .num{font-family:'Lucida Console',Monaco,monospace;font-size:.7em;color:var(--fg-dim);margin-right:.5em}
+h3{font-size:1.2rem;color:var(--accent2);margin:2em 0 .5em;font-weight:400}
+h4{font-size:1rem;color:var(--accent3);margin:1.4em 0 .4em;font-weight:500;font-family:'Lucida Console',Monaco,monospace;letter-spacing:.02em}
+p{margin-bottom:1.2em}
+.lead{font-size:1.08rem;color:var(--fg);margin-bottom:1.5em}
+
+.viz{margin:2em 0;background:var(--bg2);border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.viz canvas{display:block;width:100%;cursor:crosshair}
+.viz-caption{font-size:.8rem;color:var(--fg-dim);padding:.6em 1em;border-top:1px solid var(--border);font-family:'Lucida Console',Monaco,monospace}
+
+.controls{display:flex;flex-wrap:wrap;gap:.8rem;padding:.8em 1em;background:var(--bg3);border-top:1px solid var(--border);align-items:center}
+.controls label{font-size:.78rem;color:var(--fg-dim);font-family:'Lucida Console',Monaco,monospace;display:flex;align-items:center;gap:.4em}
+.controls input[type="range"]{width:120px;accent-color:var(--accent)}
+.controls select{background:var(--bg);color:var(--fg);border:1px solid var(--border);padding:.3em .5em;font-size:.78rem;border-radius:2px;font-family:inherit}
+.controls button,.btn{background:var(--accent);color:var(--bg);border:none;padding:.4em 1em;font-size:.78rem;font-family:'Lucida Console',Monaco,monospace;cursor:pointer;border-radius:2px;letter-spacing:.03em;transition:background .2s}
+.controls button:hover,.btn:hover{background:#f0b860}
+.btn-outline{background:transparent;border:1px solid var(--accent);color:var(--accent)}
+.btn-outline:hover{background:var(--accent);color:var(--bg)}
+
+.math{display:block;text-align:center;padding:1.4em 1.2em;margin:1.5em 0;background:var(--bg2);border-left:3px solid var(--accent);font-size:1.15rem;color:var(--fg);overflow-x:auto;border-radius:0 4px 4px 0}
+.math .katex{font-size:1.25em}
+.math-inline .katex{font-size:1.0em}
+
+.timeline{position:relative;padding:1em 0 1em 2em;margin:2em 0}
+.timeline::before{content:'';position:absolute;left:.6em;top:0;bottom:0;width:2px;background:var(--border)}
+.timeline-item{position:relative;margin-bottom:1.8em;padding-left:1.5em}
+.timeline-item::before{content:'';position:absolute;left:-1.95em;top:.5em;width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid var(--bg)}
+.timeline-year{font-family:'Lucida Console',Monaco,monospace;color:var(--accent);font-size:.85rem;margin-bottom:.2em}
+.timeline-text{font-size:.92rem;color:var(--fg-dim)}
+
+blockquote{border-left:3px solid var(--accent5);padding:.8em 1.2em;margin:1.5em 0;color:var(--fg-dim);font-style:italic;background:rgba(176,106,232,.05)}
+blockquote cite{display:block;font-size:.85rem;color:var(--accent5);margin-top:.5em;font-style:normal}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5em;margin:1.5em 0}
+@media(max-width:700px){.grid-2{grid-template-columns:1fr}}
+
+.references{margin-top:2em;padding:1.5em;background:var(--bg2);border:1px solid var(--border);border-radius:4px}
+.references h3{margin-top:0}
+.references ol{padding-left:1.5em}
+.references li{font-size:.85rem;color:var(--fg-dim);margin-bottom:.5em;line-height:1.5}
+.references li em{color:var(--fg)}
+
+footer{text-align:center;padding:3em 1.5em;color:var(--fg-dim);font-size:.85rem;border-top:1px solid var(--border)}
+
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--fg-dim)}
+
+.expandable{margin:1.5em 0;border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.expandable summary{padding:.8em 1.2em;background:var(--bg3);cursor:pointer;font-size:.9rem;color:var(--accent5);font-family:'Lucida Console',Monaco,monospace;letter-spacing:.03em;list-style:none;display:flex;align-items:center;gap:.5em}
+.expandable summary::before{content:'>';font-size:.8em;transition:transform .2s;color:var(--accent5)}
+details[open] summary::before{transform:rotate(90deg)}
+.expandable summary:hover{color:var(--fg)}
+.expandable .inner{padding:1.2em 1.4em;background:rgba(176,106,232,.04)}
+.expandable .inner p{margin-bottom:.8em}
+.expandable .inner p:last-child{margin-bottom:0}
+
+.wtabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:0}
+.wtab{padding:.4em 1em;font-size:.78rem;font-family:'Lucida Console',Monaco,monospace;color:var(--fg-dim);cursor:pointer;border:1px solid transparent;border-bottom:none;border-radius:2px 2px 0 0;background:var(--bg3);margin-right:2px;transition:color .2s}
+.wtab.active{color:var(--accent);border-color:var(--border);background:var(--bg2)}
+.wtab:hover{color:var(--fg)}
+
+.note{font-size:.85rem;color:var(--fg-dim);margin:1em 0;padding:.6em 1em;border-left:2px solid var(--accent3);background:rgba(92,232,154,.05)}
+
+.kv{font-family:'Lucida Console',Monaco,monospace;font-size:.78rem;color:var(--fg);background:var(--bg);padding:.8em 1em;border:1px solid var(--border);border-radius:2px;margin:1em 0;white-space:pre;overflow-x:auto}
+
+.tag{display:inline-block;font-family:'Lucida Console',Monaco,monospace;font-size:.72rem;color:var(--accent2);border:1px solid var(--accent2);padding:.1em .5em;border-radius:2px;margin:.2em .2em .2em 0}
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- HERO                                                           -->
+<!-- ============================================================ -->
+<header>
+  <canvas id="heroCanvas"></canvas>
+  <div class="content">
+    <h1>Companion <em>to</em> Introduction to Digital Filters</h1>
+    <p class="subtitle">
+      An interactive study companion to Julius O. Smith III's
+      <em><a href="https://ccrma.stanford.edu/~jos/filters/" target="_blank">Introduction to Digital Filters</a></em>
+      — the textbook that taught a generation of audio engineers how $H(z)$ and the unit
+      circle turn into filters you can hear.
+    </p>
+    <div class="people">
+      <span>Julius O. Smith III</span>
+      <span>Bode · Zadeh · Ragazzini</span>
+      <span>Gold &amp; Rader</span>
+      <span>Oppenheim &amp; Schafer</span>
+      <span>Parks &amp; McClellan</span>
+    </div>
+    <a href="#ch1" class="btn">Begin the story v</a>
+  </div>
+</header>
+
+<!-- ============================================================ -->
+<!-- TOC                                                            -->
+<!-- ============================================================ -->
+<nav id="toc">
+  <a href="#ch1">1 · Prologue</a>
+  <a href="#ch2">2 · History</a>
+  <a href="#ch3">3 · LTI</a>
+  <a href="#ch4">4 · z-Transform</a>
+  <a href="#ch5">5 · Frequency Response</a>
+  <a href="#ch6">6 · Elementary Filters</a>
+  <a href="#ch7">7 · Stability &amp; Phase</a>
+  <a href="#ch8">8 · Structures</a>
+  <a href="#ch9">9 · FIR/IIR Design</a>
+  <a href="#ch10">10 · Allpass</a>
+  <a href="#ch11">11 · Applications</a>
+  <a href="#ch12">12 · Legacy</a>
+</nav>
+
+<!-- ============================================================ -->
+<!-- CH 1 · PROLOGUE                                                -->
+<!-- ============================================================ -->
+<section id="ch1">
+  <h2><span class="num">1</span>Prologue — Why Digital Filters?</h2>
+  <p class="lead">
+    A digital filter is a linear, time-invariant map from an input sequence $x[n]$ to
+    an output sequence $y[n]$ — implemented as a recursion of multiplies and adds.
+    Nothing more exotic than that. And yet, dressed in the z-transform and plotted on
+    the unit circle, this family of maps covers every equaliser in every DAW, every
+    anti-aliasing filter in every ADC, every reverb, every synth, every modem, every
+    hearing aid.
+  </p>
+
+  <p>
+    Julius O. Smith III's <em>Introduction to Digital Filters with Audio Applications</em>
+    — the W3K Publishing volume freely hosted at
+    <a href="https://ccrma.stanford.edu/~jos/filters/" target="_blank">ccrma.stanford.edu/~jos/filters/</a>
+    — is the textbook several generations of Stanford CCRMA students read before
+    touching a sound. It privileges two ideas above all others: the
+    <em>transfer function</em> $H(z)$, and the <em>geometry</em> of its poles and zeros
+    on the complex plane. This companion is a browser-native set of experiments around
+    exactly those two ideas.
+  </p>
+
+  <div class="math">
+    $$y[n] \;=\; \sum_{i=0}^{M} b_i\, x[n-i] \;-\; \sum_{j=1}^{N} a_j\, y[n-j]$$
+  </div>
+  <p>
+    Every filter in this guide is some instance of that difference equation. The entire
+    intellectual apparatus — z-transforms, frequency response, stability, minimum phase,
+    design by windowing or by bilinear transform — exists to help you pick the
+    $\{a_j, b_i\}$.
+  </p>
+
+  <h3>What you can play with in this page</h3>
+  <p>
+    The centrepiece is Chapter 4's draggable z-plane: place poles (x) and zeros (o),
+    and watch the transfer function, magnitude response, phase response, group delay,
+    impulse response, and difference equation all update live. Around that core sit
+    convolution demos, a filter-designer (window method + bilinear biquad), allpass
+    experiments, a Schroeder-reverb sketch, and an audible 3-band EQ routed through the
+    Web Audio API.
+  </p>
+
+  <div class="viz">
+    <canvas id="heroMiniPZ" height="260" style="height:260px"></canvas>
+    <div class="viz-caption">Hero recap — a complex-conjugate pole pair spirals on the z-plane; the matching impulse response is an exponentially decaying sinusoid. Move the slider to change the pole angle (frequency) and radius (decay).</div>
+    <div class="controls">
+      <label>Pole radius <input type="range" id="hmR" min="0.2" max="0.99" value="0.93" step="0.005"> <span id="hmRVal">0.930</span></label>
+      <label>Pole angle <input type="range" id="hmA" min="0.05" max="3.05" value="0.8" step="0.01"> <span id="hmAVal">0.80 rad</span></label>
+    </div>
+  </div>
+
+  <div class="note">
+    Notation follows JOS: transfer function $H(z)=\sum_n h[n]z^{-n}$; the unit circle is
+    $z=e^{j\omega}$; frequency response $H(e^{j\omega})$; normalised frequency $\omega
+    \in [-\pi,\pi]$ where $\omega=\pi$ is Nyquist. No exceptions.
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CH 2 · HISTORY                                                 -->
+<!-- ============================================================ -->
+<section id="ch2">
+  <h2><span class="num">2</span>A Sketch of the History</h2>
+  <p class="lead">
+    Digital filtering is one of the rare engineering subjects whose central concepts
+    were mostly in place <em>before</em> the computers that would execute them. By the
+    time Cooley and Tukey's FFT arrived in 1965, the z-transform, the sampling theorem,
+    and feedback-system theory were all twenty years old. The history of digital
+    filters is therefore a history of porting continuous-domain instincts onto discrete
+    time, and learning which ones survive.
+  </p>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-year">1927</div>
+      <div class="timeline-text">
+        <strong>Harold S. Black</strong> (Bell Labs) invents the
+        <em>negative-feedback amplifier</em> on a Lackawanna Ferry in August. Feedback
+        trades gain for linearity and bandwidth and introduces the idea that a system
+        is best analysed by a transfer function with poles and zeros.
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">1928 &amp; 1933</div>
+      <div class="timeline-text">
+        <strong>Harry Nyquist</strong> and <strong>Vladimir Kotelnikov</strong>
+        establish the sampling theorem — a bandlimited signal is fully determined by
+        samples at twice its highest frequency. <strong>Claude Shannon</strong>
+        formalises it in 1948. Discrete-time filtering becomes a well-posed question.
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">1945</div>
+      <div class="timeline-text">
+        <strong>Hendrik Bode</strong>'s <em>Network Analysis and Feedback Amplifier
+        Design</em> crystallises the log-magnitude / log-frequency plot and the minimum-
+        phase / allpass decomposition — tools the digital world inherits whole.
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">1947-1952</div>
+      <div class="timeline-text">
+        <strong>Lotfi Zadeh</strong> and <strong>John Ragazzini</strong> at Columbia
+        develop the <em>z-transform</em> for sampled-data control systems. Their 1952
+        paper <em>"The analysis of sampled-data systems"</em> fixes the notation still
+        used today. The z-transform does for discrete LTI systems what Laplace does for
+        continuous ones.
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">1965</div>
+      <div class="timeline-text">
+        <strong>Cooley &amp; Tukey</strong> publish the FFT. The economics of
+        frequency-domain analysis collapse from $O(N^2)$ to $O(N\log N)$, making
+        overlap-save convolution and FFT-based filter design newly practical.
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">1966</div>
+      <div class="timeline-text">
+        <strong>James Kaiser</strong> publishes his eponymous window and the
+        $(\beta, L)$ design formulas. Windowed-FIR design is now systematic: pick a
+        stopband attenuation, compute $\beta$, compute $L$, truncate the ideal
+        impulse response.
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">1968</div>
+      <div class="timeline-text">
+        <strong>Charles Rader</strong> describes the <em>parametric biquad</em> and
+        digital resonator forms that every synthesiser and EQ plugin still uses. At
+        Lincoln Laboratory, DSP is moving from batch processing to real time.
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">1969</div>
+      <div class="timeline-text">
+        <strong>Bernard Gold &amp; Charles Rader</strong> publish <em>Digital
+        Processing of Signals</em> — the first DSP textbook. It collects the
+        z-transform, FIR/IIR design, quantisation analysis, and the first
+        signal-flow graph treatments of DF-I and DF-II structures.
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">1972</div>
+      <div class="timeline-text">
+        <strong>Thomas Parks &amp; James McClellan</strong> publish the
+        Chebyshev-optimal (equiripple) FIR algorithm — the Parks-McClellan /
+        Remez exchange method. For a given length and passband/stopband, no FIR filter
+        has smaller peak error. Still the industry standard.
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">1975</div>
+      <div class="timeline-text">
+        <strong>Rabiner &amp; Gold</strong>'s <em>Theory and Application of Digital
+        Signal Processing</em> and <strong>Oppenheim &amp; Schafer</strong>'s
+        <em>Digital Signal Processing</em> both appear. The canon is set. A generation
+        of engineers learn the field from these two volumes.
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">1985</div>
+      <div class="timeline-text">
+        <strong>Robert Bristow-Johnson</strong>'s <em>Audio EQ Cookbook</em> (later
+        published as a web document) spells out closed-form biquad coefficients for
+        every audio EQ shape. Every DAW plugin ships a copy.
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">1988</div>
+      <div class="timeline-text">
+        <strong>Proakis &amp; Manolakis</strong>'s <em>Digital Signal Processing:
+        Principles, Algorithms, and Applications</em> becomes the standard
+        undergraduate text for the next two decades. Julius Smith's CCRMA notes
+        evolve in parallel into the book this guide companions.
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-year">2000s-today</div>
+      <div class="timeline-text">
+        The <em>plugin era</em>. Every DAW ships biquads, linear-phase FIR EQ,
+        Schroeder/Moorer reverbs, Butterworth / Chebyshev / elliptic anti-alias
+        filters, oversampled nonlinearities, and learned filters. JOS's four online
+        books (DFT, Digital Filters, Spectral, Physical) become the reference.
+      </div>
+    </div>
+  </div>
+
+  <blockquote>
+    "The theory of digital filters is the theory of the z-transform, made concrete by
+    the geometry of poles and zeros."
+    <cite>— J. O. Smith III, <em>Introduction to Digital Filters</em>, paraphrased</cite>
+  </blockquote>
+</section>
+
+<!-- ============================================================ -->
+<!-- CH 3 · SIGNALS, SYSTEMS, LTI                                   -->
+<!-- ============================================================ -->
+<section id="ch3">
+  <h2><span class="num">3</span>Signals, Systems, Linear Time-Invariance</h2>
+  <p class="lead">
+    A discrete-time <em>signal</em> is a function $x:\mathbb{Z}\to\mathbb{R}$. A
+    discrete-time <em>system</em> maps one signal to another: $y = T\{x\}$. A system is
+    <strong>linear</strong> if superposition holds; it is <strong>time-invariant</strong>
+    if delaying the input by $k$ samples delays the output by $k$ samples. When both
+    hold — LTI — the system is completely characterised by its impulse response $h[n] =
+    T\{\delta[n]\}$.
+  </p>
+
+  <div class="math">
+    $$y[n] \;=\; (h * x)[n] \;=\; \sum_{k=-\infty}^{\infty} h[k]\,x[n-k]$$
+  </div>
+
+  <p>
+    That sum is <em>convolution</em>. It is the single most important operation in
+    digital signal processing: every FIR filter <em>is</em> a convolution, and every
+    IIR filter has a convolution representation in terms of its (infinite) impulse
+    response. The rest of JOS's book is largely a study of clever parameterisations for
+    $h[n]$.
+  </p>
+
+  <h3>Interactive: watch the kernel slide</h3>
+  <p>
+    Pick an input $x[n]$ and a short FIR kernel $h[n]$. The kernel is drawn
+    flipped-and-shifted underneath $x$, and the product-sum at each shift builds up
+    $y[n]$ sample by sample. This is the definition of convolution, animated.
+  </p>
+
+  <div class="viz">
+    <canvas id="convViz" height="360" style="height:360px"></canvas>
+    <div class="controls">
+      <label>Input
+        <select id="convInput">
+          <option value="impulse">Unit impulse</option>
+          <option value="step">Step</option>
+          <option value="sine" selected>Sine</option>
+          <option value="square">Square wave</option>
+          <option value="noise">White noise</option>
+        </select>
+      </label>
+      <label>Kernel h[n]
+        <select id="convKernel">
+          <option value="smoother" selected>5-tap smoother</option>
+          <option value="diff">Differencer [1,-1]</option>
+          <option value="ma9">9-tap moving average</option>
+          <option value="lp15">15-tap Hann lowpass</option>
+          <option value="edge">Edge detector [-1,0,1]</option>
+        </select>
+      </label>
+      <label>Shift <input type="range" id="convShift" min="0" max="199" value="40" step="1"> <span id="convShiftVal">40</span></label>
+      <button id="convAnim">Auto-slide</button>
+    </div>
+    <div class="viz-caption">
+      Top: input x[n] (blue). Middle: flipped-and-shifted kernel h[n-k] under a red cursor. Bottom: running output y[n] (green) to the left of the cursor.
+    </div>
+  </div>
+
+  <h3>Properties that will matter later</h3>
+  <ul style="padding-left:1.5em;color:var(--fg-dim);font-size:.95rem;margin-bottom:1.2em">
+    <li style="margin-bottom:.4em"><strong>Causality.</strong> $h[n]=0$ for $n<0$. Required for real-time implementation.</li>
+    <li style="margin-bottom:.4em"><strong>Stability.</strong> $\sum_n |h[n]| < \infty$ (BIBO). Every bounded input gives a bounded output.</li>
+    <li style="margin-bottom:.4em"><strong>FIR.</strong> $h[n]$ has finite support. Always stable. Convolution is a direct sum.</li>
+    <li><strong>IIR.</strong> $h[n]$ has infinite support. Implementable via a <em>difference equation</em> with feedback. Must be checked for stability.</li>
+  </ul>
+
+  <p>
+    A general LTI system whose impulse response satisfies a linear constant-coefficient
+    difference equation is precisely the class every "filter" belongs to. The
+    z-transform turns that class into an algebraic object you can design with.
+  </p>
+</section>
+
+<!-- ============================================================ -->
+<!-- CH 4 · Z-TRANSFORM                                             -->
+<!-- ============================================================ -->
+<section id="ch4">
+  <h2><span class="num">4</span>The z-Transform</h2>
+  <p class="lead">
+    The z-transform is the discrete-time analogue of the Laplace transform. It turns
+    difference equations into algebraic equations, convolution into multiplication, and
+    the question <em>"what does this filter do?"</em> into <em>"where are its poles and
+    zeros?"</em>
+  </p>
+
+  <div class="math">
+    $$X(z) \;=\; \sum_{n=-\infty}^{\infty} x[n]\, z^{-n}, \qquad z \in \mathbb{C}$$
+  </div>
+
+  <p>
+    The region of convergence (ROC) is the annulus of $|z|$ for which the sum converges.
+    For a causal, stable system the ROC includes $|z|=1$ and extends outward — which is
+    the same as saying all poles lie strictly inside the unit circle.
+  </p>
+
+  <h3>Difference equation &harr; rational transfer function</h3>
+  <p>
+    Take the z-transform of the difference equation $\sum_j a_j y[n-j] = \sum_i b_i x[n-i]$
+    with $a_0=1$. Using the shift property $x[n-k] \leftrightarrow z^{-k}X(z)$:
+  </p>
+  <div class="math">
+    $$H(z) \;=\; \frac{Y(z)}{X(z)} \;=\; \frac{\sum_{i=0}^{M} b_i z^{-i}}{1 + \sum_{j=1}^{N} a_j z^{-j}} \;=\; \frac{b_0 \prod_i (1 - q_i z^{-1})}{\prod_j (1 - p_j z^{-1})}$$
+  </div>
+  <p>
+    The roots $q_i$ of the numerator are the <em>zeros</em> — frequencies the filter
+    annihilates. The roots $p_j$ of the denominator are the <em>poles</em> — resonances.
+    That is the whole geometric picture of the unit disk.
+  </p>
+
+  <h3>Flagship interactive: the draggable z-plane</h3>
+  <p>
+    Click anywhere inside the plane to <em>add</em> a zero (shift-click for a pole).
+    Drag existing poles (x) and zeros (o) to reshape $H(z)$. Double-click a pole or
+    zero to remove it. Complex-conjugate pairs are added automatically for any point
+    off the real axis, so the filter stays real-coefficient. The right panels update
+    live: magnitude response (dB), phase response, group delay, and impulse response.
+    The difference-equation coefficients $\{b_i\}, \{a_j\}$ are printed below.
+  </p>
+
+  <div class="viz">
+    <canvas id="pzPlane" height="520" style="height:520px"></canvas>
+    <div class="controls">
+      <label>Gain K <input type="range" id="pzK" min="0.02" max="5" value="1" step="0.01"> <span id="pzKVal">1.00</span></label>
+      <label><input type="checkbox" id="pzLogMag" checked> log |H| (dB)</label>
+      <label><input type="checkbox" id="pzPairs" checked> auto-conjugate pairs</label>
+      <button id="pzPreset1">Preset: 2-pole resonator</button>
+      <button id="pzPreset2">Preset: Notch</button>
+      <button id="pzPreset3">Preset: Butterworth-like LP</button>
+      <button id="pzClear">Clear</button>
+    </div>
+    <div class="viz-caption">
+      Left: z-plane (unit circle). Right column: |H(e^jw)|, angle H, group delay, impulse response. Click = add zero; Shift+Click = add pole; Drag = move; Dbl-click = delete.
+    </div>
+  </div>
+  <div class="kv" id="pzEq">b = [1.00]   a = [1.00]</div>
+
+  <p>
+    Every filter in subsequent chapters is a specific arrangement on this plane: a
+    one-pole lowpass drops one pole on the positive real axis; a two-pole resonator
+    puts a conjugate pair near the unit circle; a notch places a zero on the unit
+    circle and a pole just inside it at the same angle; an allpass flips each pole
+    across the circle into its reciprocal zero.
+  </p>
+</section>
+
+<!-- ============================================================ -->
+<!-- CH 5 · FREQUENCY RESPONSE                                     -->
+<!-- ============================================================ -->
+<section id="ch5">
+  <h2><span class="num">5</span>Frequency Response, Phase, Group Delay</h2>
+  <p class="lead">
+    The unit circle is where digital filters earn their keep. Evaluating $H(z)$ at
+    $z=e^{j\omega}$ gives the <em>frequency response</em> — a complex-valued function of
+    normalised frequency. Its magnitude is what you hear as loudness-vs-pitch; its
+    phase tells you how each frequency is delayed.
+  </p>
+
+  <div class="math">
+    $$H(e^{j\omega}) \;=\; \sum_{n=-\infty}^{\infty} h[n]\, e^{-j\omega n}$$
+  </div>
+  <p>
+    This is the DTFT of the impulse response. The magnitude response $|H(e^{j\omega})|$
+    and the phase response $\phi(\omega) = \angle H(e^{j\omega})$ are both real functions
+    of $\omega \in [-\pi, \pi]$. Real-coefficient filters have conjugate-symmetric
+    frequency response, so we only need to plot $\omega \in [0, \pi]$.
+  </p>
+
+  <h3>Group delay</h3>
+  <p>
+    The <em>group delay</em> is the negative derivative of phase with respect to
+    frequency:
+  </p>
+  <div class="math">
+    $$\tau_g(\omega) \;=\; -\,\frac{d\phi(\omega)}{d\omega}$$
+  </div>
+  <p>
+    If a narrowband signal centred at $\omega_0$ passes through the filter, its envelope
+    is delayed by $\tau_g(\omega_0)$ samples. A <em>linear-phase</em> filter has constant
+    group delay — every frequency is delayed equally, so the waveform shape of a
+    transient is preserved. Every symmetric FIR filter is linear-phase. No causal IIR
+    filter is, in general, linear-phase.
+  </p>
+
+  <h3>Triple panel: magnitude / phase / group delay</h3>
+  <div class="viz">
+    <canvas id="frTriple" height="360" style="height:360px"></canvas>
+    <div class="controls">
+      <label>Filter
+        <select id="frSel">
+          <option value="lp1" selected>One-pole LP (y[n]=0.9 y[n-1] + 0.1 x[n])</option>
+          <option value="res">Two-pole resonator at w0=0.6, r=0.95</option>
+          <option value="notch">Notch at w0=0.8, r=0.97</option>
+          <option value="fir9">9-tap Hann-windowed FIR LP</option>
+          <option value="biqpk">Peaking biquad (+8 dB @ w0=1.0, Q=4)</option>
+        </select>
+      </label>
+      <label><input type="checkbox" id="frDb" checked> dB magnitude</label>
+    </div>
+    <div class="viz-caption">Three stacked plots over w in [0,pi]: magnitude (top), unwrapped phase (middle), group delay (bottom).</div>
+  </div>
+
+  <details class="expandable">
+    <summary>Aside: Bode and the birth of log-log plotting</summary>
+    <div class="inner">
+      <p>
+        Hendrik Bode's <em>Network Analysis and Feedback Amplifier Design</em> (1945) is
+        the reason we plot $20\log_{10}|H|$ versus $\log\omega$. On that grid, rational
+        transfer functions become piecewise-linear asymptotes, and the phase plot is a
+        short table of lookup curves. Bode's minimum-phase theorem — for a minimum-phase
+        system, magnitude and phase are related by a Hilbert transform — survives
+        verbatim into the digital world and motivates Chapter 7's minimum-phase /
+        allpass decomposition.
+      </p>
+    </div>
+  </details>
+</section>
+
+<!-- ============================================================ -->
+<!-- CH 6 · CANONICAL ELEMENTARY FILTERS                            -->
+<!-- ============================================================ -->
+<section id="ch6">
+  <h2><span class="num">6</span>Canonical Elementary Filters</h2>
+  <p class="lead">
+    Most useful filters are compositions of a handful of second-order (biquad)
+    sections. JOS's book spends several chapters building intuition for these
+    elementary shapes, because once you recognise them on the z-plane you can read any
+    datasheet at a glance.
+  </p>
+
+  <h3>One-pole lowpass</h3>
+  <div class="math">
+    $$H(z) \;=\; \frac{1-p}{1-p\,z^{-1}}, \qquad p \in (0,1)$$
+  </div>
+  <p>
+    One real pole at $z=p$. Gain is normalised so $H(1)=1$ (DC gain = 1). The
+    -3 dB frequency is $\omega_c \approx 1-p$ for $p \to 1$.
+  </p>
+
+  <h3>One-zero lowpass (the moving average of 2)</h3>
+  <div class="math">
+    $$H(z) \;=\; \tfrac{1}{2}(1 + z^{-1})$$
+  </div>
+  <p>
+    A single zero at $z=-1$ (Nyquist). Linear-phase, group delay = 1/2 sample.
+  </p>
+
+  <h3>Two-pole resonator</h3>
+  <div class="math">
+    $$H(z) \;=\; \frac{1}{1 - 2r\cos(\omega_0)\,z^{-1} + r^2\,z^{-2}}$$
+  </div>
+  <p>
+    Conjugate pole pair at $r e^{\pm j\omega_0}$. Resonant frequency $\omega_0$; $Q$
+    increases as $r\to 1$. Impulse response is a decaying sinusoid
+    $r^n \sin(\omega_0 n + \phi)$. This is the core of every digital synth resonator
+    and every ringing physical model.
+  </p>
+
+  <h3>Second-order notch</h3>
+  <div class="math">
+    $$H(z) \;=\; \frac{1 - 2\cos(\omega_0)\,z^{-1} + z^{-2}}{1 - 2r\cos(\omega_0)\,z^{-1} + r^2\,z^{-2}}$$
+  </div>
+  <p>
+    Zeros <em>on</em> the unit circle at $e^{\pm j\omega_0}$ kill frequency $\omega_0$
+    exactly. Poles just inside the circle at the same angle, $r<1$, control the notch
+    width. As $r\to 1$ the notch narrows; as $r\to 0$ it broadens into a general
+    band-stop.
+  </p>
+
+  <h3>Shelving and peaking (Bristow-Johnson biquad)</h3>
+  <p>
+    The RBJ Audio EQ Cookbook closed-forms compute $b_0, b_1, b_2, a_1, a_2$ given
+    corner frequency $\omega_0 = 2\pi f_0/f_s$, quality $Q$, and gain in dB:
+  </p>
+  <div class="kv">alpha = sin(w0) / (2 Q)
+A     = 10^(dBgain/40)     // for peaking and shelving
+
+// Peaking EQ:
+b0 = 1 + alpha * A
+b1 = -2 cos(w0)
+b2 = 1 - alpha * A
+a0 = 1 + alpha / A
+a1 = -2 cos(w0)
+a2 = 1 - alpha / A</div>
+
+  <h3>Interactive explorer</h3>
+  <div class="viz">
+    <canvas id="elemFilt" height="420" style="height:420px"></canvas>
+    <div class="controls">
+      <label>Filter
+        <select id="efSel">
+          <option value="1plp" selected>One-pole LP</option>
+          <option value="1zlp">One-zero LP (zero at -1)</option>
+          <option value="reson">Two-pole resonator</option>
+          <option value="notch">Notch (RBJ)</option>
+          <option value="peak">Peaking EQ (RBJ)</option>
+          <option value="lsh">Low-shelf (RBJ)</option>
+          <option value="hsh">High-shelf (RBJ)</option>
+        </select>
+      </label>
+      <label>w0 / pi <input type="range" id="efW" min="0.02" max="0.98" value="0.25" step="0.005"> <span id="efWVal">0.250</span></label>
+      <label>Q <input type="range" id="efQ" min="0.3" max="12" value="1.0" step="0.05"> <span id="efQVal">1.00</span></label>
+      <label>gain dB <input type="range" id="efG" min="-18" max="18" value="6" step="0.5"> <span id="efGVal">6.0</span></label>
+    </div>
+    <div class="viz-caption">Four panels: z-plane (pole/zero layout), magnitude response, impulse response, and the closed-form coefficients as the {b_i}, {a_j} update live.</div>
+  </div>
+  <div class="kv" id="efCoef">b = [...]</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CH 7 · STABILITY + MINIMUM PHASE                              -->
+<!-- ============================================================ -->
+<section id="ch7">
+  <h2><span class="num">7</span>Poles, Zeros, Stability, Minimum Phase</h2>
+  <p class="lead">
+    Geometry on the unit disk encodes almost everything practical about a digital
+    filter: stability is a <em>pole-location</em> question; minimum phase is a
+    <em>zero-location</em> question; linear phase is a <em>symmetry</em> question on
+    $h[n]$.
+  </p>
+
+  <h3>Stability</h3>
+  <p>
+    A causal LTI system is BIBO-stable iff every pole lies <em>strictly inside</em> the
+    unit circle: $|p_j| < 1$ for all $j$. A pole on the circle ($|p|=1$) gives a
+    marginally stable system; a pole outside ($|p|>1$) blows up. In the flagship demo
+    in Chapter 4, drag any pole out past the circle to see the <strong>UNSTABLE</strong>
+    indicator trigger and the impulse response diverge.
+  </p>
+
+  <h3>Minimum phase and allpass decomposition</h3>
+  <p>
+    A stable, causal filter is <em>minimum phase</em> if all its zeros also lie inside
+    the unit circle. Minimum-phase filters have the smallest possible group delay among
+    all causal filters with the same magnitude response, and they are
+    <em>invertible</em> by a stable, causal filter (the inverse has poles where $H$ has
+    zeros, all inside the disk).
+  </p>
+  <p>
+    Every rational $H(z)$ factorises uniquely as
+  </p>
+  <div class="math">
+    $$H(z) \;=\; H_{\text{min}}(z)\, H_{\text{ap}}(z)$$
+  </div>
+  <p>
+    where $H_{\text{ap}}$ is an <em>allpass</em> filter — $|H_{\text{ap}}(e^{j\omega})|=1$
+    for all $\omega$. The allpass carries all the "extra" phase, the minimum-phase
+    factor carries the magnitude. This is the discrete-time analogue of Bode's
+    theorem. See also the companion
+    <a href="https://github.com/BrendanJamesLynskey/MinimumMaximumPhaseFilters" target="_blank">MinimumMaximumPhaseFilters</a>
+    guide for a dedicated exploration.
+  </p>
+
+  <h3>Interactive: reflect a zero across the unit circle</h3>
+  <p>
+    If a zero at $q$ is reflected to its <em>reciprocal conjugate</em>
+    $\bar{q}^{-1} = 1/\bar q$, the magnitude response is unchanged, but the phase
+    response changes — exactly by the phase of an allpass. Drag the zero between
+    $|q|<1$ and $|q|>1$ and watch: same magnitude, different phase.
+  </p>
+
+  <div class="viz">
+    <canvas id="minPhase" height="360" style="height:360px"></canvas>
+    <div class="controls">
+      <label>zero radius <input type="range" id="mpR" min="0.2" max="3.5" value="0.6" step="0.01"> <span id="mpRVal">0.60</span></label>
+      <label>zero angle <input type="range" id="mpA" min="0.05" max="3.05" value="1.2" step="0.01"> <span id="mpAVal">1.20 rad</span></label>
+      <button id="mpFlip">Flip across unit circle</button>
+    </div>
+    <div class="viz-caption">FIR filter H(z) = (1 - q z^-1)(1 - q* z^-1). Left: z-plane. Right top: |H| — invariant under reflection. Right bottom: angle H — different for minimum vs maximum phase.</div>
+  </div>
+
+  <div class="note">
+    In audio, minimum-phase EQs (most analogue modelling plugins) have lower latency and
+    preserve transient alignment; linear-phase EQs (symmetric FIR) have exact
+    phase-invariance but introduce pre-ringing audible on drums. Allpass filters are
+    the glue that lets you trade one for the other.
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CH 8 · IMPLEMENTATION STRUCTURES                              -->
+<!-- ============================================================ -->
+<section id="ch8">
+  <h2><span class="num">8</span>Implementation Structures</h2>
+  <p class="lead">
+    Given a rational $H(z)$ there are many signal-flow graphs that compute the same
+    difference equation. They differ in number of delays, arithmetic precision needed,
+    sensitivity to coefficient quantisation, and parallelism on a real processor.
+  </p>
+
+  <h3>Direct Form I (DF-I)</h3>
+  <p>
+    Compute the feed-forward sum first, then the feedback. Uses $M+N$ delays. Safe
+    numerically because there is no internal state that can overflow independently.
+  </p>
+  <div class="math">
+    $$w[n] \;=\; \sum_i b_i x[n-i], \qquad y[n] \;=\; w[n] - \sum_j a_j y[n-j]$$
+  </div>
+
+  <h3>Direct Form II (DF-II)</h3>
+  <p>
+    Swap the order — first apply the all-pole part to produce an intermediate
+    $v[n]$, then apply the all-zero part to $v[n]$. Needs only $\max(M,N)$ delays.
+    Can overflow internally at $v[n]$ even if $y[n]$ is bounded.
+  </p>
+  <div class="math">
+    $$v[n] \;=\; x[n] - \sum_j a_j v[n-j], \qquad y[n] \;=\; \sum_i b_i v[n-i]$$
+  </div>
+
+  <h3>Transposed Direct Form II (TDF-II)</h3>
+  <p>
+    Transpose the signal-flow graph of DF-II: reverse every arrow and swap summers with
+    branch points. Same I/O behaviour; different internal numerical properties. TDF-II
+    is the default in most DSP libraries (SciPy <code>lfilter</code>, Matlab
+    <code>filter</code>) because it has the best scaling behaviour for fixed-point
+    implementations and a single accumulator path.
+  </p>
+
+  <h3>Cascade and parallel</h3>
+  <p>
+    For higher-order filters, biquad cascades $H(z) = \prod_k H_k(z)$ (each $H_k$ a
+    second-order section) are numerically far preferable to DF-I/II applied to a single
+    high-order polynomial. Pole-zero pairing and section ordering affect roundoff;
+    practical rules of thumb are in Oppenheim &amp; Schafer.
+  </p>
+
+  <h3>Signal-flow diagrams</h3>
+  <div class="viz">
+    <canvas id="structDiag" height="420" style="height:420px"></canvas>
+    <div class="controls">
+      <label>Structure
+        <select id="stSel">
+          <option value="df1" selected>Direct Form I</option>
+          <option value="df2">Direct Form II</option>
+          <option value="tdf2">Transposed Direct Form II</option>
+          <option value="casc">Cascade (two biquads)</option>
+        </select>
+      </label>
+    </div>
+    <div class="viz-caption">Signal-flow graphs. Triangles = multipliers (coefficient label on the side). Squares with Z^-1 = unit delays. Circles with + = summers.</div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CH 9 · FIR vs IIR DESIGN                                      -->
+<!-- ============================================================ -->
+<section id="ch9">
+  <h2><span class="num">9</span>FIR vs IIR Filter Design</h2>
+  <p class="lead">
+    Design a filter by specifying behaviour, not coefficients. For FIR: pick a window
+    and length, or an equiripple specification. For IIR: design the continuous-time
+    prototype (Butterworth, Chebyshev I/II, elliptic) and bilinear-transform it. JOS's
+    book covers all three; this chapter gives you interactive versions of two.
+  </p>
+
+  <h3>Window-method FIR</h3>
+  <p>
+    The ideal lowpass $h_{\text{ideal}}[n] = \omega_c/\pi \cdot \mathrm{sinc}(\omega_c n/\pi)$
+    is the inverse DTFT of the brick-wall $|\omega|<\omega_c$ indicator function. It has
+    infinite support and is non-causal. The <em>window method</em> truncates it to length
+    $L$, multiplies by a taper $w[n]$, and shifts by $(L-1)/2$ to make it causal. The
+    window controls the trade-off between transition-band width and stopband
+    attenuation.
+  </p>
+  <div class="math">
+    $$h[n] \;=\; w[n]\cdot\frac{\omega_c}{\pi}\, \mathrm{sinc}\!\Bigl(\frac{\omega_c}{\pi}\!\bigl(n - \tfrac{L-1}{2}\bigr)\Bigr), \quad 0\le n\le L-1$$
+  </div>
+
+  <h3>Bilinear-transform IIR</h3>
+  <p>
+    Map the analogue $s$-plane into the digital $z$-plane via
+  </p>
+  <div class="math">
+    $$s \;=\; \frac{2}{T}\,\frac{1-z^{-1}}{1+z^{-1}}$$
+  </div>
+  <p>
+    This conformal map takes the left half $s$-plane to the unit disk (stability
+    preserved) and the $j\omega$-axis to the unit circle (frequency-response shape
+    preserved up to a nonlinear warp $\Omega = \frac{2}{T}\tan(\omega/2)$). Pre-warp the
+    analogue cutoffs and you get Butterworth / Chebyshev / Elliptic digital IIRs of
+    the same order as the analogue prototypes.
+  </p>
+
+  <h3>Parks-McClellan / Remez (equiripple FIR)</h3>
+  <p>
+    Parks &amp; McClellan (1972) applied the Remez exchange algorithm to FIR design:
+    minimise the <em>maximum</em> error in passband and stopband. The result is an
+    equiripple filter that is Chebyshev-optimal for the given length and band edges. A
+    full Remez implementation is beyond this page — the "Parks-McClellan" option below
+    uses pre-computed coefficients for a handful of representative specifications so
+    you can compare against the window method.
+  </p>
+
+  <div class="viz">
+    <canvas id="designer" height="440" style="height:440px"></canvas>
+    <div class="controls">
+      <label>Method
+        <select id="dsMethod">
+          <option value="win" selected>FIR window method</option>
+          <option value="bw">IIR Butterworth (bilinear)</option>
+        </select>
+      </label>
+      <label>Type
+        <select id="dsType">
+          <option value="lp" selected>Low-pass</option>
+          <option value="hp">High-pass</option>
+          <option value="bp">Band-pass</option>
+          <option value="bs">Band-stop</option>
+        </select>
+      </label>
+      <label>Cutoff / pi <input type="range" id="dsFc" min="0.05" max="0.95" value="0.25" step="0.005"> <span id="dsFcVal">0.250</span></label>
+      <label>Width / pi <input type="range" id="dsBw" min="0.05" max="0.5" value="0.15" step="0.005"> <span id="dsBwVal">0.150</span></label>
+      <label>Order <input type="range" id="dsN" min="4" max="101" value="31" step="1"> <span id="dsNVal">31</span></label>
+      <label>Window (FIR)
+        <select id="dsWin">
+          <option value="rect">Rectangular</option>
+          <option value="hann" selected>Hann</option>
+          <option value="hamming">Hamming</option>
+          <option value="blackman">Blackman</option>
+        </select>
+      </label>
+    </div>
+    <div class="viz-caption">Live designer. Top: magnitude (dB). Middle: impulse response h[n]. Bottom: group delay. For band-pass/band-stop, "cutoff" is the centre; "width" is the bandwidth.</div>
+  </div>
+
+  <details class="expandable">
+    <summary>Why a Kaiser window gives you the specification you asked for</summary>
+    <div class="inner">
+      <p>
+        Kaiser (1966) derived closed-form formulae linking stopband attenuation
+        $A_s$ in dB, transition width $\Delta\omega$, filter length $L$, and window
+        shape parameter $\beta$:
+      </p>
+      <p style="font-family:'Lucida Console',monospace;font-size:.88rem">
+        L = ceil((A_s - 7.95) / (14.36 * Delta_omega / (2 pi))) + 1 <br>
+        beta = 0.1102 (A_s - 8.7)     if A_s > 50 <br>
+        beta = 0.5842 (A_s - 21)^0.4 + 0.07886 (A_s - 21)   for 21 <= A_s <= 50 <br>
+        beta = 0   if A_s < 21
+      </p>
+      <p>
+        Pick $A_s$ and $\Delta\omega$, compute $L$ and $\beta$, apply the Kaiser
+        window — and the filter meets spec on the first try. This is why Kaiser's 1966
+        paper is one of the most-cited in DSP.
+      </p>
+    </div>
+  </details>
+</section>
+
+<!-- ============================================================ -->
+<!-- CH 10 · ALLPASS                                               -->
+<!-- ============================================================ -->
+<section id="ch10">
+  <h2><span class="num">10</span>Allpass Filters</h2>
+  <p class="lead">
+    An allpass has unit magnitude at every frequency. It does nothing to the amplitude
+    spectrum; everything it does, it does to the phase. Allpass filters are the
+    cornerstone of digital reverb, fractional-delay interpolators, dispersive physical
+    models, and phase equalisers.
+  </p>
+
+  <div class="math">
+    $$H_{\text{ap}}(z) \;=\; \frac{z^{-N} A(z^{-1})}{A(z)} \;=\; \frac{a_N + a_{N-1} z^{-1} + \cdots + z^{-N}}{1 + a_1 z^{-1} + \cdots + a_N z^{-N}}$$
+  </div>
+  <p>
+    The numerator is the conjugate-reversed denominator. Each pole at $p$ is paired
+    with a zero at $1/\bar p$. That mirror-image geometry is what guarantees $|H|=1$.
+  </p>
+
+  <h3>Fractional delay</h3>
+  <p>
+    A first-order allpass $H(z) = (a + z^{-1})/(1 + a z^{-1})$ has phase delay that is
+    (approximately) constant over low frequencies, tunable via the coefficient $a$.
+    Chaining $N$ of them gives a tunable fractional delay line used in Karplus-Strong
+    string synthesis, commuted-waveguide instruments, and pitch-shifters.
+  </p>
+
+  <h3>Schroeder reverb</h3>
+  <p>
+    Manfred Schroeder (1962) proposed cascading several allpasses with widely different
+    delays to create a diffuse echo-free reverb tail. Parallel comb filters generate
+    colouration; series allpasses diffuse it. Every algorithmic reverb since —
+    Moorer, Stautner-Puckette, Jot's FDN, Freeverb — is a descendant.
+  </p>
+
+  <h3>Interactive: chained allpasses</h3>
+  <div class="viz">
+    <canvas id="apDemo" height="360" style="height:360px"></canvas>
+    <div class="controls">
+      <label># stages <input type="range" id="apN" min="1" max="8" value="4" step="1"> <span id="apNVal">4</span></label>
+      <label>coeff a <input type="range" id="apA" min="-0.95" max="0.95" value="0.7" step="0.01"> <span id="apAVal">0.70</span></label>
+      <button id="apImpulse">Show impulse response</button>
+    </div>
+    <div class="viz-caption">Top: |H| (should be flat at 0 dB — invariant under number of stages). Middle: phase response (accumulates with each stage). Bottom: impulse response of the cascade.</div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CH 11 · APPLICATIONS                                          -->
+<!-- ============================================================ -->
+<section id="ch11">
+  <h2><span class="num">11</span>Applications</h2>
+  <p class="lead">
+    Three vignettes where the difference equation from Chapter 1 earns its keep: a
+    3-band peaking equaliser applied to a synthesised drum loop, a DC blocker for
+    AC-coupling, and an anti-alias interpolation filter.
+  </p>
+
+  <h3>Audio EQ on a drum loop</h3>
+  <p>
+    Three RBJ peaking biquads in series — low, mid, high. Adjust each band's gain and
+    listen to the synthesised kick+snare+hats loop. This is exactly how a plugin EQ is
+    implemented, minus the GUI. Coefficients are recomputed every time you move a
+    slider.
+  </p>
+  <div class="viz">
+    <canvas id="eqViz" height="320" style="height:320px"></canvas>
+    <div class="controls">
+      <label>Low (100 Hz) <input type="range" id="eqLo" min="-18" max="18" value="0" step="0.5"> <span id="eqLoVal">0.0 dB</span></label>
+      <label>Mid (1 kHz) <input type="range" id="eqMd" min="-18" max="18" value="0" step="0.5"> <span id="eqMdVal">0.0 dB</span></label>
+      <label>High (6 kHz) <input type="range" id="eqHi" min="-18" max="18" value="0" step="0.5"> <span id="eqHiVal">0.0 dB</span></label>
+      <label>Q <input type="range" id="eqQ" min="0.4" max="4" value="1.0" step="0.05"> <span id="eqQVal">1.00</span></label>
+      <button id="eqPlayOrig">Play original</button>
+      <button id="eqPlayEQ">Play EQ'd</button>
+    </div>
+    <div class="viz-caption">Top: composite EQ curve in dB (all three biquads cascaded). Bottom: a short segment of the drum loop — the two waveforms are overlaid (original grey, EQ'd coloured).</div>
+  </div>
+
+  <h3>DC blocker</h3>
+  <p>
+    A one-pole highpass with pole just inside the unit circle at $z=1-\epsilon$ and a
+    zero exactly at $z=1$:
+  </p>
+  <div class="math">
+    $$H(z) \;=\; \frac{1 - z^{-1}}{1 - (1-\epsilon)\, z^{-1}}, \qquad \epsilon \ll 1$$
+  </div>
+  <p>
+    At DC the zero gives exactly zero; everywhere else the pole nearby cancels, so
+    only DC is removed. Ubiquitous in effects chains to keep envelope-follower output
+    from integrating up a constant offset.
+  </p>
+
+  <h3>Anti-alias / interpolation filter</h3>
+  <p>
+    Before resampling up by an integer factor $L$, upsample-by-zero-stuffing creates
+    spectral images at $k \cdot f_s/L$; a lowpass with cutoff $\pi/L$ removes them.
+    Down-sampling by $M$ requires a lowpass at $\pi/M$ <em>before</em> decimation to
+    prevent aliasing. Both are FIR with linear phase in production audio — typically a
+    Parks-McClellan design of a few hundred taps, or a polyphase decomposition of one.
+  </p>
+
+  <div class="note">
+    Oversampled plugins (Pro-Q, FabFilter's stable) use 2x-8x internal sample rate to
+    move aliasing products above the audible band before a sharp anti-alias FIR pulls
+    them out. This is why "oversampled" is a check-box on many EQ and saturation
+    plugins.
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CH 12 · LEGACY                                                -->
+<!-- ============================================================ -->
+<section id="ch12">
+  <h2><span class="num">12</span>Legacy and Continuing Impact</h2>
+  <p class="lead">
+    The textbook this page companions first appeared as CCRMA lecture notes in the
+    1980s. Four decades later, nearly every artefact in consumer and professional audio
+    is still a difference equation. The question has shifted from <em>"what's the best
+    filter?"</em> to <em>"how do we learn one from data?"</em>, but the z-plane
+    remains the coordinate system we think in.
+  </p>
+
+  <h3>Where digital filters live today</h3>
+  <ul style="padding-left:1.5em;color:var(--fg-dim);font-size:.95rem;margin-bottom:1.2em">
+    <li style="margin-bottom:.4em"><strong>DAW plugins.</strong> Every EQ, compressor sidechain, reverb early reflections, multiband dynamics, and crossover is a cascade of biquads or FIRs. The Bristow-Johnson cookbook is the reference.</li>
+    <li style="margin-bottom:.4em"><strong>Converters.</strong> Every sigma-delta ADC/DAC has a digital decimation filter; every upsampling DAC has an interpolation filter. Linear-phase FIR, pre-computed, in silicon.</li>
+    <li style="margin-bottom:.4em"><strong>Oversampling for nonlinearities.</strong> Guitar amp simulators, tube emulations, wavefolders — all oversampled 4-16x with steep FIR anti-alias filters to keep aliasing below the noise floor.</li>
+    <li style="margin-bottom:.4em"><strong>Warped filters.</strong> Frequency-warped IIR (Smith &amp; Abel) and allpass-warped transforms concentrate resolution where the ear needs it — bass for room modes, high end for speaker crossovers.</li>
+    <li style="margin-bottom:.4em"><strong>Learned filters.</strong> Differentiable DSP: biquad parameters as learnable weights, end-to-end gradient through the difference equation. DDSP, NAM, neural EQ matching — all built on the same $a_j, b_i$ framework.</li>
+    <li><strong>Communications.</strong> Every modem, every 5G baseband, every Wi-Fi chain is filters all the way down.</li>
+  </ul>
+
+  <h3>Related guides in this family</h3>
+  <p>
+    This page is a companion to Julius Smith's <em>Introduction to Digital Filters</em>
+    (the orange volume at
+    <a href="https://ccrma.stanford.edu/~jos/filters/" target="_blank">ccrma.stanford.edu/~jos/filters/</a>).
+    Three sibling volumes cover the DFT, spectral audio processing, and physical audio
+    modelling; each has its own companion in this family:
+  </p>
+  <ul style="padding-left:1.5em;color:var(--fg-dim);font-size:.95rem;margin-bottom:1.5em">
+    <li style="margin-bottom:.4em"><a href="https://github.com/BrendanJamesLynskey/Companion_JOS_Mathematics_of_the_DFT" target="_blank">Companion to <em>Mathematics of the DFT</em></a> — basis expansions, DFT theorems, real signals.</li>
+    <li style="margin-bottom:.4em"><a href="https://github.com/BrendanJamesLynskey/Companion_JOS_Spectral_Audio_Signal_Processing" target="_blank">Companion to <em>Spectral Audio Signal Processing</em></a> — STFT, spectral modelling, sinusoidal analysis.</li>
+    <li style="margin-bottom:.4em"><a href="https://github.com/BrendanJamesLynskey/Companion_JOS_Physical_Audio_Signal_Processing" target="_blank">Companion to <em>Physical Audio Signal Processing</em></a> — waveguides, digital waveguide synthesis, commuted synthesis.</li>
+    <li><a href="https://github.com/BrendanJamesLynskey/Companion_JOS_Audio_Signal_Processing_in_Faust" target="_blank">Companion to <em>Audio Signal Processing in Faust</em></a> — the block-diagram functional language for realtime DSP.</li>
+  </ul>
+  <p>
+    And several adjacent interactive guides for deeper study of specific topics:
+  </p>
+  <ul style="padding-left:1.5em;color:var(--fg-dim);font-size:.95rem;margin-bottom:1.5em">
+    <li style="margin-bottom:.4em"><a href="https://github.com/BrendanJamesLynskey/STFT_for_Sound" target="_blank">STFT for Sound</a> — Gabor atoms, phase vocoder, Griffin-Lim.</li>
+    <li style="margin-bottom:.4em"><a href="https://github.com/BrendanJamesLynskey/LaplaceGuide" target="_blank">Laplace Guide</a> — continuous-time transfer functions (the analogue side of the bilinear transform).</li>
+    <li style="margin-bottom:.4em"><a href="https://github.com/BrendanJamesLynskey/MinimumMaximumPhaseFilters" target="_blank">Minimum / Maximum Phase Filters</a> — the zero-location story in depth.</li>
+    <li style="margin-bottom:.4em"><a href="https://github.com/BrendanJamesLynskey/Kramers_Kronig_Relations" target="_blank">Kramers-Kronig Relations</a> — Bode's magnitude-phase link in its original physics form.</li>
+    <li><a href="https://github.com/BrendanJamesLynskey/Sound_Transforms_History" target="_blank">Sound Transforms History</a> — the family tree of audio transforms.</li>
+  </ul>
+
+  <div class="references">
+    <h3>Key References</h3>
+    <ol>
+      <li>Smith, J. O. (2007). <em>Introduction to Digital Filters with Audio Applications.</em> W3K Publishing. <a href="https://ccrma.stanford.edu/~jos/filters/" target="_blank">ccrma.stanford.edu/~jos/filters/</a></li>
+      <li>Black, H. S. (1934). <em>Stabilized Feedback Amplifiers.</em> Electrical Engineering 53(1), 114-120.</li>
+      <li>Bode, H. W. (1945). <em>Network Analysis and Feedback Amplifier Design.</em> Van Nostrand.</li>
+      <li>Nyquist, H. (1928). <em>Certain Topics in Telegraph Transmission Theory.</em> Trans. AIEE 47(2), 617-644.</li>
+      <li>Shannon, C. E. (1949). <em>Communication in the Presence of Noise.</em> Proc. IRE 37(1), 10-21.</li>
+      <li>Ragazzini, J. R. &amp; Zadeh, L. A. (1952). <em>The Analysis of Sampled-Data Systems.</em> Trans. AIEE 71(II), 225-234.</li>
+      <li>Kaiser, J. F. (1966). <em>Digital Filters.</em> In F. F. Kuo &amp; J. F. Kaiser (eds.), System Analysis by Digital Computer. Wiley.</li>
+      <li>Cooley, J. W. &amp; Tukey, J. W. (1965). <em>An Algorithm for the Machine Calculation of Complex Fourier Series.</em> Math. Comp. 19(90), 297-301.</li>
+      <li>Rader, C. M. &amp; Gold, B. (1967). <em>Digital Filter Design Techniques in the Frequency Domain.</em> Proc. IEEE 55(2), 149-171.</li>
+      <li>Gold, B. &amp; Rader, C. M. (1969). <em>Digital Processing of Signals.</em> McGraw-Hill.</li>
+      <li>Parks, T. W. &amp; McClellan, J. H. (1972). <em>Chebyshev Approximation for Nonrecursive Digital Filters with Linear Phase.</em> IEEE Trans. Circuit Theory 19(2), 189-194.</li>
+      <li>Rabiner, L. R. &amp; Gold, B. (1975). <em>Theory and Application of Digital Signal Processing.</em> Prentice-Hall.</li>
+      <li>Oppenheim, A. V. &amp; Schafer, R. W. (1975). <em>Digital Signal Processing.</em> Prentice-Hall. (Third edition with Buck: 2009.)</li>
+      <li>Schroeder, M. R. (1962). <em>Natural Sounding Artificial Reverberation.</em> J. Audio Eng. Soc. 10(3), 219-223.</li>
+      <li>Proakis, J. G. &amp; Manolakis, D. G. (2006). <em>Digital Signal Processing: Principles, Algorithms, and Applications</em> (4th ed.). Prentice-Hall.</li>
+      <li>Bristow-Johnson, R. (2005). <em>Cookbook Formulae for Audio EQ Biquad Filter Coefficients.</em> <a href="https://www.w3.org/TR/audio-eq-cookbook/" target="_blank">W3C TR</a>.</li>
+      <li>Smith, J. O. &amp; Abel, J. S. (1999). <em>Bark and ERB Bilinear Transforms.</em> IEEE Trans. Speech &amp; Audio Proc. 7(6), 697-708.</li>
+      <li>Engel, J. et al. (2020). <em>DDSP: Differentiable Digital Signal Processing.</em> ICLR.</li>
+    </ol>
+  </div>
+</section>
+
+<footer>
+  <p>
+    An interactive guide by
+    <a href="https://github.com/BrendanJamesLynskey/DSP_and_Music" target="_blank">BrendanJamesLynskey</a>.
+    <br>Companion to Julius O. Smith III's
+    <a href="https://ccrma.stanford.edu/~jos/filters/" target="_blank">Introduction to Digital Filters</a>.
+    <br>Zero dependencies — vanilla HTML, Canvas &amp; Web Audio API. MIT License.
+  </p>
+</footer>
+
+<script>
+(function(){
+"use strict";
+
+// ---- Utilities --------------------------------------------------
+const DPR = window.devicePixelRatio || 1;
+function setupCanvas(canvas, w, h) {
+  canvas.width = Math.round(w * DPR);
+  canvas.height = Math.round(h * DPR);
+  canvas.style.height = h + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(DPR, DPR);
+  return ctx;
+}
+function fitWidth(canvas) {
+  const r = canvas.parentElement.getBoundingClientRect();
+  return Math.max(320, Math.floor(r.width));
+}
+
+// Radix-2 FFT (in-place, complex arrays)
+function fft(reArr, imArr, inverse) {
+  const n = reArr.length;
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (i < j) {
+      let t = reArr[i]; reArr[i] = reArr[j]; reArr[j] = t;
+      t = imArr[i]; imArr[i] = imArr[j]; imArr[j] = t;
+    }
+  }
+  for (let len = 2; len <= n; len <<= 1) {
+    const ang = (inverse ? 2 : -2) * Math.PI / len;
+    const wRe = Math.cos(ang), wIm = Math.sin(ang);
+    for (let i = 0; i < n; i += len) {
+      let cR = 1, cI = 0;
+      for (let k = 0; k < len/2; k++) {
+        const uR = reArr[i+k], uI = imArr[i+k];
+        const vR = reArr[i+k+len/2]*cR - imArr[i+k+len/2]*cI;
+        const vI = reArr[i+k+len/2]*cI + imArr[i+k+len/2]*cR;
+        reArr[i+k] = uR + vR;
+        imArr[i+k] = uI + vI;
+        reArr[i+k+len/2] = uR - vR;
+        imArr[i+k+len/2] = uI - vI;
+        const nR = cR*wRe - cI*wIm;
+        cI = cR*wIm + cI*wRe;
+        cR = nR;
+      }
+    }
+  }
+  if (inverse) for (let i = 0; i < n; i++) { reArr[i]/=n; imArr[i]/=n; }
+}
+
+// Evaluate H(z) at z = e^{j omega} from polynomial coefficients b[], a[]
+// H(z) = (b0 + b1 z^-1 + ...) / (1 + a1 z^-1 + ...)
+function freqz(b, a, omega) {
+  let nR=0, nI=0, dR=0, dI=0;
+  for (let i=0;i<b.length;i++){
+    const th = -i*omega;
+    nR += b[i]*Math.cos(th);
+    nI += b[i]*Math.sin(th);
+  }
+  for (let i=0;i<a.length;i++){
+    const th = -i*omega;
+    dR += a[i]*Math.cos(th);
+    dI += a[i]*Math.sin(th);
+  }
+  const denom = dR*dR + dI*dI;
+  return { re: (nR*dR + nI*dI)/denom, im: (nI*dR - nR*dI)/denom };
+}
+
+// Evaluate from poles/zeros on the unit circle at angle omega
+// H(z) = K * prod(z - zk) / prod(z - pk)
+function freqzPZ(zeros, poles, K, omega) {
+  const zR = Math.cos(omega), zI = Math.sin(omega);
+  let nR=1, nI=0;
+  for (const z of zeros){
+    const dr = zR - z.re, di = zI - z.im;
+    const r = nR*dr - nI*di, i = nR*di + nI*dr;
+    nR=r; nI=i;
+  }
+  let dR=1, dI=0;
+  for (const p of poles){
+    const dr = zR - p.re, di = zI - p.im;
+    const r = dR*dr - dI*di, i = dR*di + dI*dr;
+    dR=r; dI=i;
+  }
+  const denom = dR*dR + dI*dI;
+  const hr = K*(nR*dR + nI*dI)/denom;
+  const hi = K*(nI*dR - nR*dI)/denom;
+  return { re: hr, im: hi };
+}
+
+// Multiply real polynomials by conjugate-pair-root factors: (1 - 2 Re(r) z^-1 + |r|^2 z^-2)
+// For a real root r: (1 - r z^-1)
+function polyFromRoots(roots) {
+  // Build using real coefficients; pair complex-conjugates
+  let coeffs = [1];
+  const used = new Array(roots.length).fill(false);
+  for (let i=0;i<roots.length;i++){
+    if (used[i]) continue;
+    const r = roots[i];
+    // find conjugate
+    let pairIdx = -1;
+    if (Math.abs(r.im) > 1e-9) {
+      for (let j=i+1;j<roots.length;j++){
+        if (!used[j] && Math.abs(roots[j].re - r.re)<1e-6 && Math.abs(roots[j].im + r.im)<1e-6) {
+          pairIdx = j; break;
+        }
+      }
+    }
+    let factor;
+    if (pairIdx>=0) {
+      used[pairIdx]=true;
+      const reR = r.re, absSq = r.re*r.re + r.im*r.im;
+      factor = [1, -2*reR, absSq];
+    } else {
+      factor = [1, -r.re];
+    }
+    // convolve coeffs with factor
+    const nc = new Array(coeffs.length + factor.length - 1).fill(0);
+    for (let a=0;a<coeffs.length;a++)
+      for (let b=0;b<factor.length;b++)
+        nc[a+b] += coeffs[a]*factor[b];
+    coeffs = nc;
+    used[i]=true;
+  }
+  return coeffs;
+}
+
+// Impulse response of H(z) from b,a (feed impulse, run difference equation)
+function impulseResponse(b, a, N) {
+  const h = new Float32Array(N);
+  const x = new Float32Array(N); x[0]=1;
+  for (let n=0;n<N;n++){
+    let y = 0;
+    for (let i=0;i<b.length;i++) if (n-i>=0) y += b[i]*x[n-i];
+    for (let j=1;j<a.length;j++) if (n-j>=0) y -= a[j]*h[n-j];
+    h[n] = y / (a[0]||1);
+  }
+  return h;
+}
+
+// Apply difference equation to a real signal
+function filterSig(b, a, x) {
+  const N = x.length;
+  const y = new Float32Array(N);
+  const M = b.length, P = a.length;
+  for (let n=0;n<N;n++){
+    let s = 0;
+    for (let i=0;i<M;i++) if (n-i>=0) s += b[i]*x[n-i];
+    for (let j=1;j<P;j++) if (n-j>=0) s -= a[j]*y[n-j];
+    y[n] = s/(a[0]||1);
+  }
+  return y;
+}
+
+// Group delay by numerical differencing of unwrapped phase
+function groupDelay(b, a, K) {
+  const out = new Float32Array(K);
+  const ph = new Float32Array(K);
+  for (let k=0;k<K;k++){
+    const w = Math.PI*k/(K-1);
+    const H = freqz(b,a,w);
+    ph[k] = Math.atan2(H.im, H.re);
+  }
+  // unwrap
+  for (let k=1;k<K;k++){
+    let d = ph[k]-ph[k-1];
+    while (d > Math.PI) { ph[k]-=2*Math.PI; d = ph[k]-ph[k-1]; }
+    while (d < -Math.PI){ ph[k]+=2*Math.PI; d = ph[k]-ph[k-1]; }
+  }
+  const dw = Math.PI/(K-1);
+  for (let k=0;k<K;k++){
+    const a0 = k>0 ? ph[k]-ph[k-1] : ph[1]-ph[0];
+    const a1 = k<K-1 ? ph[k+1]-ph[k] : ph[K-1]-ph[K-2];
+    out[k] = -0.5*(a0+a1)/dw;
+  }
+  return { gd: out, phase: ph };
+}
+
+// Signal library
+function sigImpulse(N){ const x=new Float32Array(N); x[0]=1; return x; }
+function sigStep(N){ const x=new Float32Array(N); for(let i=0;i<N;i++) x[i]=1; return x; }
+function sigSine(N, f){ const x=new Float32Array(N); for(let i=0;i<N;i++) x[i]=Math.sin(2*Math.PI*f*i); return x; }
+function sigSquare(N, f){ const x=new Float32Array(N); for(let i=0;i<N;i++) x[i]=Math.sin(2*Math.PI*f*i)>0?1:-1; return x; }
+function sigNoise(N){ const x=new Float32Array(N); for(let i=0;i<N;i++) x[i]=2*Math.random()-1; return x; }
+
+// Audio
+let audioCtx = null;
+function getAudioCtx(){if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); return audioCtx;}
+function playBuffer(samples, sr){
+  const ctx = getAudioCtx();
+  if (ctx.state==='suspended') ctx.resume();
+  const buf = ctx.createBuffer(1, samples.length, sr);
+  buf.getChannelData(0).set(samples);
+  const src = ctx.createBufferSource();
+  src.buffer = buf; src.connect(ctx.destination); src.start();
+  return src;
+}
+
+// Export
+const DF = window.DF = {
+  setupCanvas, fitWidth, fft, freqz, freqzPZ, polyFromRoots, impulseResponse,
+  filterSig, groupDelay, sigImpulse, sigStep, sigSine, sigSquare, sigNoise,
+  getAudioCtx, playBuffer, DPR
+};
+
+// ---- Hero animation: a pole-pair spiralling on the z-plane -----
+(function heroAnim(){
+  const c = document.getElementById('heroCanvas');
+  if (!c) return;
+  const hostW = () => Math.max(320, document.documentElement.clientWidth);
+  const hostH = () => Math.max(400, Math.min(window.innerHeight, 900));
+  let ctx = setupCanvas(c, hostW(), hostH());
+  let W = hostW(), H = hostH();
+  function frame(now){
+    W = hostW(); H = hostH();
+    if (c.width !== Math.round(W*DPR) || c.height !== Math.round(H*DPR)) ctx = setupCanvas(c, W, H);
+    ctx.fillStyle = 'rgba(10,11,15,0.15)'; ctx.fillRect(0,0,W,H);
+    const cx = W*0.35, cy = H*0.5, R = Math.min(W,H)*0.28;
+    // unit circle
+    ctx.strokeStyle = 'rgba(138,141,154,0.35)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
+    // axes
+    ctx.beginPath(); ctx.moveTo(cx-R*1.2,cy); ctx.lineTo(cx+R*1.2,cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx,cy-R*1.2); ctx.lineTo(cx,cy+R*1.2); ctx.stroke();
+    // pole pair, slowly orbiting
+    const t = now*0.0006;
+    const r = 0.82 + 0.14*Math.sin(now*0.00032);
+    const ang = 0.7 + 0.55*Math.sin(t*0.8);
+    const px = cx + R*r*Math.cos(ang), py = cy - R*r*Math.sin(ang);
+    const px2 = cx + R*r*Math.cos(-ang), py2 = cy - R*r*Math.sin(-ang);
+    // draw Xs
+    ctx.strokeStyle = 'rgba(232,164,74,0.9)'; ctx.lineWidth=2;
+    drawX(ctx,px,py,7); drawX(ctx,px2,py2,7);
+    // IR panel on right
+    const ox = W*0.62, oy = H*0.5 - 80, ow = W*0.32, oh = 160;
+    ctx.strokeStyle='rgba(138,141,154,0.35)'; ctx.lineWidth=1;
+    ctx.strokeRect(ox,oy,ow,oh);
+    ctx.strokeStyle='rgba(74,157,232,0.85)'; ctx.lineWidth=1.5;
+    ctx.beginPath();
+    const N = 120;
+    for (let n=0;n<N;n++){
+      const h = Math.pow(r,n)*Math.cos(ang*n);
+      const xx = ox + ow*n/N;
+      const yy = oy + oh/2 - h*oh*0.42;
+      if (n===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+    // dividing label
+    ctx.fillStyle='rgba(212,214,224,0.5)';
+    ctx.font="11px 'Lucida Console', monospace";
+    ctx.fillText("z-plane",cx-R*1.2,cy-R*1.2-8);
+    ctx.fillText("impulse response h[n]", ox, oy-6);
+    requestAnimationFrame(frame);
+  }
+  function drawX(ctx,x,y,s){
+    ctx.beginPath();
+    ctx.moveTo(x-s,y-s); ctx.lineTo(x+s,y+s);
+    ctx.moveTo(x-s,y+s); ctx.lineTo(x+s,y-s);
+    ctx.stroke();
+  }
+  requestAnimationFrame(frame);
+})();
+
+// ---- Hero mini PZ demo -----------------------------------------
+(function heroMini(){
+  const c = document.getElementById('heroMiniPZ'); if(!c) return;
+  const rEl = document.getElementById('hmR');
+  const aEl = document.getElementById('hmA');
+  const rVal = document.getElementById('hmRVal');
+  const aVal = document.getElementById('hmAVal');
+  let W=0, H=260, ctx=null;
+  function setup(){ W=fitWidth(c); ctx=setupCanvas(c,W,H); draw(); }
+  function draw(){
+    if(!ctx) return;
+    const r = parseFloat(rEl.value), a = parseFloat(aEl.value);
+    rVal.textContent = r.toFixed(3);
+    aVal.textContent = a.toFixed(2)+' rad';
+    ctx.fillStyle='#12141c'; ctx.fillRect(0,0,W,H);
+    // split into three columns: z-plane, IR, mag response
+    const pw = W/3;
+    // z-plane
+    const cx=pw/2, cy=H/2, R=Math.min(pw,H)*0.38;
+    ctx.strokeStyle='#2a2d3a'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-R*1.2,cy); ctx.lineTo(cx+R*1.2,cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx,cy-R*1.2); ctx.lineTo(cx,cy+R*1.2); ctx.stroke();
+    ctx.strokeStyle='#e8a44a'; ctx.lineWidth=2;
+    const px=cx+R*r*Math.cos(a), py=cy-R*r*Math.sin(a);
+    const px2=cx+R*r*Math.cos(-a), py2=cy-R*r*Math.sin(-a);
+    xMark(ctx,px,py,6); xMark(ctx,px2,py2,6);
+    ctx.fillStyle='#8a8d9a'; ctx.font="11px 'Lucida Console', monospace";
+    ctx.fillText('z-plane', 8, 16);
+    // IR
+    const ox=pw, oy=0, ow=pw, oh=H;
+    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(ox+8,oy+18,ow-16,oh-30);
+    const N=140;
+    ctx.strokeStyle='#4a9de8'; ctx.beginPath();
+    for (let n=0;n<N;n++){
+      const h=Math.pow(r,n)*Math.cos(a*n);
+      const xx=ox+8+(ow-16)*n/N;
+      const yy=oy+18+(oh-30)/2 - h*(oh-30)*0.42;
+      if(n===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+    ctx.fillStyle='#8a8d9a'; ctx.fillText('impulse response', ox+8, 14);
+    // magnitude response
+    const mx=2*pw, my=0, mw=pw, mh=H;
+    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(mx+8,my+18,mw-16,mh-30);
+    const b=[1], aCoef=[1, -2*r*Math.cos(a), r*r];
+    const K=180;
+    let maxM=0; const mag=new Float32Array(K);
+    for (let k=0;k<K;k++){
+      const w=Math.PI*k/(K-1);
+      const Hv=freqz(b,aCoef,w);
+      mag[k]=Math.sqrt(Hv.re*Hv.re+Hv.im*Hv.im);
+      if (mag[k]>maxM) maxM=mag[k];
+    }
+    ctx.strokeStyle='#5ce89a'; ctx.beginPath();
+    for (let k=0;k<K;k++){
+      const xx=mx+8+(mw-16)*k/(K-1);
+      const yy=my+18+(mh-30) - (mag[k]/maxM)*(mh-30);
+      if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+    ctx.fillStyle='#8a8d9a'; ctx.fillText('|H(e^jw)|', mx+8, 14);
+  }
+  function xMark(ctx,x,y,s){ ctx.beginPath(); ctx.moveTo(x-s,y-s); ctx.lineTo(x+s,y+s); ctx.moveTo(x-s,y+s); ctx.lineTo(x+s,y-s); ctx.stroke(); }
+  rEl.addEventListener('input', draw);
+  aEl.addEventListener('input', draw);
+  window.addEventListener('resize', setup);
+  setup();
+})();
+
+// ---- CH 3: convolution slider ----------------------------------
+(function convDemo(){
+  const c = document.getElementById('convViz'); if(!c) return;
+  const inSel = document.getElementById('convInput');
+  const kSel = document.getElementById('convKernel');
+  const sEl = document.getElementById('convShift');
+  const sVal = document.getElementById('convShiftVal');
+  const animBtn = document.getElementById('convAnim');
+  const N = 200;
+  let x = buildInput(inSel.value);
+  let h = buildKernel(kSel.value);
+  let ctx=null, W=0, H=360;
+  let anim=false, animFrame=0;
+  function buildInput(kind){
+    if (kind==='impulse'){ const a=new Float32Array(N); a[20]=1; return a; }
+    if (kind==='step'){ const a=new Float32Array(N); for(let i=20;i<N;i++) a[i]=0.7; return a; }
+    if (kind==='sine'){ const a=new Float32Array(N); for(let i=0;i<N;i++) a[i]=0.7*Math.sin(2*Math.PI*0.04*i); return a; }
+    if (kind==='square'){ const a=new Float32Array(N); for(let i=0;i<N;i++) a[i]=Math.sin(2*Math.PI*0.035*i)>0?0.6:-0.6; return a; }
+    const a=new Float32Array(N); for(let i=0;i<N;i++) a[i]=0.5*(Math.random()*2-1); return a;
+  }
+  function buildKernel(kind){
+    if (kind==='smoother') return Float32Array.of(0.2,0.2,0.2,0.2,0.2);
+    if (kind==='diff') return Float32Array.of(1,-1);
+    if (kind==='ma9'){ const a=new Float32Array(9); a.fill(1/9); return a; }
+    if (kind==='lp15'){
+      const a=new Float32Array(15); let s=0;
+      for(let i=0;i<15;i++){ a[i]=0.5-0.5*Math.cos(2*Math.PI*i/14); s+=a[i]; }
+      for(let i=0;i<15;i++) a[i]/=s;
+      return a;
+    }
+    return Float32Array.of(-0.5,0,0.5);
+  }
+  function conv(x,h){
+    const y=new Float32Array(N);
+    for(let n=0;n<N;n++){
+      let s=0;
+      for(let k=0;k<h.length;k++) if(n-k>=0) s+=h[k]*x[n-k];
+      y[n]=s;
+    }
+    return y;
+  }
+  function setup(){ W=fitWidth(c); ctx=setupCanvas(c,W,H); draw(); }
+  function draw(){
+    if(!ctx) return;
+    const shift = parseInt(sEl.value);
+    sVal.textContent = shift;
+    const y = conv(x,h);
+    ctx.fillStyle='#12141c'; ctx.fillRect(0,0,W,H);
+    const padL=40, padR=10, rowH=(H-36)/3, rowTop=[12, 12+rowH+6, 12+2*rowH+12];
+    const pw=W-padL-padR;
+    function xp(i){ return padL + pw*i/(N-1); }
+    // row 1: x[n]
+    let maxX=1; for(const v of x) if(Math.abs(v)>maxX) maxX=Math.abs(v);
+    drawRow(rowTop[0], 'x[n]', x, '#4a9de8', maxX);
+    // cursor
+    ctx.strokeStyle='#e85a7a'; ctx.lineWidth=1.5;
+    const cxp=xp(shift);
+    ctx.beginPath(); ctx.moveTo(cxp,0); ctx.lineTo(cxp,H); ctx.stroke();
+    // row 2: flipped shifted h aligned so h[0] sits at x[shift]
+    ctx.save();
+    ctx.fillStyle='#8a8d9a'; ctx.font="11px 'Lucida Console', monospace";
+    ctx.fillText('h[n-k]', 4, rowTop[1]+14);
+    ctx.strokeStyle='#2a2d3a'; ctx.beginPath();
+    ctx.moveTo(padL, rowTop[1]+rowH/2); ctx.lineTo(W-padR, rowTop[1]+rowH/2); ctx.stroke();
+    // draw kernel as stem plot; at sample shift -> h[0], sample shift-1 -> h[1], etc.
+    let maxH=0; for(const v of h) if(Math.abs(v)>maxH) maxH=Math.abs(v);
+    ctx.strokeStyle='#e8a44a'; ctx.lineWidth=2;
+    for(let k=0;k<h.length;k++){
+      const idx = shift-k;
+      if (idx<0 || idx>=N) continue;
+      const x0=xp(idx), y0=rowTop[1]+rowH/2;
+      const yy=y0 - (h[k]/maxH)*(rowH/2-4);
+      ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x0,yy); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x0,yy,2.2,0,Math.PI*2); ctx.fillStyle='#e8a44a'; ctx.fill();
+    }
+    ctx.restore();
+    // row 3: y[n] - full green line, but only draw solid up to the cursor
+    let maxY=1; for(const v of y) if(Math.abs(v)>maxY) maxY=Math.abs(v);
+    drawRow(rowTop[2], 'y[n]', y, '#5ce89a', maxY, shift);
+    // labels
+    ctx.fillStyle='#8a8d9a'; ctx.font="11px 'Lucida Console', monospace";
+    ctx.fillText('shift n='+shift, W-110, 14);
+    function drawRow(top, label, arr, col, mx, cursorIdx){
+      ctx.strokeStyle='#2a2d3a';
+      ctx.beginPath(); ctx.moveTo(padL, top+rowH/2); ctx.lineTo(W-padR, top+rowH/2); ctx.stroke();
+      ctx.fillStyle='#8a8d9a'; ctx.font="11px 'Lucida Console', monospace";
+      ctx.fillText(label, 4, top+14);
+      ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.beginPath();
+      for(let i=0;i<N;i++){
+        const xx=xp(i);
+        const yy=top+rowH/2 - (arr[i]/mx)*(rowH/2-4);
+        if(cursorIdx!==undefined && i>cursorIdx){ ctx.stroke(); ctx.strokeStyle=col+'66'; ctx.beginPath(); ctx.moveTo(xx,yy); continue; }
+        if(i===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+      }
+      ctx.stroke();
+    }
+  }
+  function tick(){
+    if (!anim) return;
+    animFrame = (animFrame+1) % N;
+    sEl.value = animFrame;
+    draw();
+    requestAnimationFrame(tick);
+  }
+  inSel.addEventListener('change', ()=>{ x=buildInput(inSel.value); draw(); });
+  kSel.addEventListener('change', ()=>{ h=buildKernel(kSel.value); draw(); });
+  sEl.addEventListener('input', draw);
+  animBtn.addEventListener('click', ()=>{ anim=!anim; animBtn.textContent = anim?'Pause':'Auto-slide'; if(anim){ animFrame=parseInt(sEl.value); tick(); } });
+  window.addEventListener('resize', setup);
+  setup();
+})();
+
+// ---- CH 4: Flagship draggable z-plane --------------------------
+(function pzFlagship(){
+  const c = document.getElementById('pzPlane'); if (!c) return;
+  const kEl = document.getElementById('pzK'), kVal=document.getElementById('pzKVal');
+  const logEl = document.getElementById('pzLogMag');
+  const pairEl = document.getElementById('pzPairs');
+  const eqEl = document.getElementById('pzEq');
+  const btnRes = document.getElementById('pzPreset1');
+  const btnNot = document.getElementById('pzPreset2');
+  const btnBW = document.getElementById('pzPreset3');
+  const btnClr = document.getElementById('pzClear');
+
+  let poles = [];  // each {re, im}
+  let zeros = [];
+  let K = 1.0;
+  let W=0, H=520, ctx=null;
+  let drag=null; // {type, idx}
+
+  function preset(name){
+    poles.length=0; zeros.length=0;
+    if (name==='res'){
+      poles.push({re:0.9*Math.cos(0.6), im:0.9*Math.sin(0.6)});
+      poles.push({re:0.9*Math.cos(0.6), im:-0.9*Math.sin(0.6)});
+    } else if (name==='notch'){
+      zeros.push({re:Math.cos(0.8), im:Math.sin(0.8)});
+      zeros.push({re:Math.cos(0.8), im:-Math.sin(0.8)});
+      poles.push({re:0.95*Math.cos(0.8), im:0.95*Math.sin(0.8)});
+      poles.push({re:0.95*Math.cos(0.8), im:-0.95*Math.sin(0.8)});
+    } else if (name==='bw'){
+      // 4th-order Butterworth-ish low-pass via bilinear with fc=0.1 fs
+      // Use two biquad stages with poles at ~(r, +/-theta) and (r2, +/-theta2)
+      const wc = 0.25*Math.PI;
+      // For simplicity, hand-place 4 poles on an ellipse inside the disk near wc
+      const r = 0.72;
+      poles.push({re:r*Math.cos(wc*0.85), im:r*Math.sin(wc*0.85)});
+      poles.push({re:r*Math.cos(wc*0.85), im:-r*Math.sin(wc*0.85)});
+      poles.push({re:r*0.9*Math.cos(wc*1.2), im:r*0.9*Math.sin(wc*1.2)});
+      poles.push({re:r*0.9*Math.cos(wc*1.2), im:-r*0.9*Math.sin(wc*1.2)});
+      // Two zeros at Nyquist for the rolloff
+      zeros.push({re:-1, im:0});
+      zeros.push({re:-1, im:0});
+      zeros.push({re:-1, im:0});
+      zeros.push({re:-1, im:0});
+    }
+    K = 1.0; kEl.value = '1'; kVal.textContent = '1.00';
+    draw();
+  }
+  preset('res');
+
+  function setup(){ W=fitWidth(c); ctx=setupCanvas(c,W,H); draw(); }
+  function planeRect(){
+    // Square plane panel on the left
+    const s = Math.min(W*0.5, H*0.98);
+    return { x: 6, y: (H-s)/2, s: s };
+  }
+  function rightCols(){
+    const pr = planeRect();
+    const rx = pr.x + pr.s + 12;
+    const rw = W - rx - 6;
+    const rh = (H - 12)/4;
+    return { rx, rw, rh };
+  }
+  function planeToCanvas(re, im){
+    const pr = planeRect();
+    const cx = pr.x + pr.s/2, cy = pr.y + pr.s/2;
+    const R = pr.s*0.42;
+    return { x: cx + re*R, y: cy - im*R, R, cx, cy };
+  }
+  function canvasToPlane(px, py){
+    const pr = planeRect();
+    const cx = pr.x + pr.s/2, cy = pr.y + pr.s/2, R = pr.s*0.42;
+    return { re: (px - cx)/R, im: (cy - py)/R };
+  }
+  function coeffs(){
+    // Build real polynomial coefficients from conjugate pairs
+    const b = polyFromRoots(zeros.slice()).map(v => v*K);
+    const a = polyFromRoots(poles.slice());
+    return { b, a };
+  }
+  function formatCoeffs(b, a){
+    const fb = '['+b.map(v=>v.toFixed(3)).join(', ')+']';
+    const fa = '['+a.map(v=>v.toFixed(3)).join(', ')+']';
+    return 'b = '+fb+'\na = '+fa;
+  }
+  function draw(){
+    if(!ctx) return;
+    K = parseFloat(kEl.value); kVal.textContent = K.toFixed(2);
+    ctx.fillStyle='#12141c'; ctx.fillRect(0,0,W,H);
+    // --- z-plane ---
+    const pr = planeRect();
+    const { cx, cy } = planeToCanvas(0,0);
+    const R = pr.s*0.42;
+    ctx.strokeStyle='#2a2d3a'; ctx.lineWidth=1;
+    // axes
+    ctx.beginPath(); ctx.moveTo(pr.x+8, cy); ctx.lineTo(pr.x+pr.s-8, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, pr.y+8); ctx.lineTo(cx, pr.y+pr.s-8); ctx.stroke();
+    // grid
+    for (let g=-1;g<=1;g+=0.5){
+      if (g===0) continue;
+      ctx.strokeStyle='#1e2030';
+      ctx.beginPath(); ctx.moveTo(pr.x+8, cy-g*R); ctx.lineTo(pr.x+pr.s-8, cy-g*R); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx+g*R, pr.y+8); ctx.lineTo(cx+g*R, pr.y+pr.s-8); ctx.stroke();
+    }
+    // unit circle
+    ctx.strokeStyle='#8a8d9a'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
+    // labels
+    ctx.fillStyle='#8a8d9a'; ctx.font="11px 'Lucida Console', monospace";
+    ctx.fillText('Re', pr.x+pr.s-24, cy-6);
+    ctx.fillText('Im', cx+6, pr.y+14);
+    ctx.fillText('|z|=1', cx+R+4, cy-4);
+    // zeros (circles)
+    for (const z of zeros){
+      const p = planeToCanvas(z.re, z.im);
+      ctx.strokeStyle='#4a9de8'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(p.x,p.y,7,0,Math.PI*2); ctx.stroke();
+    }
+    // poles (Xs)
+    for (const pp of poles){
+      const p = planeToCanvas(pp.re, pp.im);
+      ctx.strokeStyle='#e85a7a'; ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.moveTo(p.x-7,p.y-7); ctx.lineTo(p.x+7,p.y+7);
+      ctx.moveTo(p.x-7,p.y+7); ctx.lineTo(p.x+7,p.y-7);
+      ctx.stroke();
+    }
+    // Stability indicator
+    let stable = true;
+    for (const p of poles) if (p.re*p.re + p.im*p.im >= 1) { stable=false; break; }
+    ctx.fillStyle = stable ? '#5ce89a' : '#e85a7a';
+    ctx.font="bold 12px 'Lucida Console', monospace";
+    ctx.fillText(stable?'STABLE':'UNSTABLE', pr.x+8, pr.y+pr.s-8);
+    // --- right panels ---
+    const { rx, rw, rh } = rightCols();
+    const { b, a } = coeffs();
+    const K2 = 512;
+    const mag = new Float32Array(K2);
+    let magMax = 1e-12;
+    for (let k=0;k<K2;k++){
+      const w = Math.PI*k/(K2-1);
+      const Hv = freqz(b, a, w);
+      mag[k] = Math.sqrt(Hv.re*Hv.re + Hv.im*Hv.im);
+      if (mag[k]>magMax) magMax=mag[k];
+    }
+    const { gd, phase } = groupDelay(b, a, K2);
+    // Panel 1: magnitude
+    panelFrame(rx, 6, rw, rh-4, '|H(e^jw)|'+(logEl.checked?' [dB]':''));
+    ctx.strokeStyle='#e8a44a'; ctx.lineWidth=1.5; ctx.beginPath();
+    for (let k=0;k<K2;k++){
+      const xx = rx+4 + (rw-8)*k/(K2-1);
+      let yy;
+      if (logEl.checked){
+        const db = 20*Math.log10(Math.max(1e-6, mag[k]/magMax));
+        const v = Math.max(-60, Math.min(0, db));
+        yy = 6+18 + (rh-4-24)*(1 - (v+60)/60);
+      } else {
+        yy = 6+18 + (rh-4-24)*(1 - mag[k]/magMax);
+      }
+      if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+    // Panel 2: phase
+    const py0 = 6 + rh;
+    panelFrame(rx, py0, rw, rh-4, 'angle H (rad)');
+    ctx.strokeStyle='#b06ae8'; ctx.lineWidth=1.5; ctx.beginPath();
+    let phMin=Infinity, phMax=-Infinity;
+    for (let k=0;k<K2;k++){ if(phase[k]<phMin) phMin=phase[k]; if(phase[k]>phMax) phMax=phase[k]; }
+    const phRng = Math.max(0.1, phMax-phMin);
+    for (let k=0;k<K2;k++){
+      const xx = rx+4 + (rw-8)*k/(K2-1);
+      const yy = py0+18 + (rh-4-24)*(1 - (phase[k]-phMin)/phRng);
+      if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+    // Panel 3: group delay
+    const py1 = 6 + 2*rh;
+    panelFrame(rx, py1, rw, rh-4, 'group delay (samples)');
+    ctx.strokeStyle='#5ce89a'; ctx.lineWidth=1.5; ctx.beginPath();
+    let gdMin=Infinity, gdMax=-Infinity;
+    for (let k=0;k<K2;k++){ if(gd[k]<gdMin) gdMin=gd[k]; if(gd[k]>gdMax) gdMax=gd[k]; }
+    const gdRng = Math.max(0.1, gdMax-gdMin);
+    for (let k=0;k<K2;k++){
+      const xx = rx+4 + (rw-8)*k/(K2-1);
+      const yy = py1+18 + (rh-4-24)*(1 - (gd[k]-gdMin)/gdRng);
+      if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+    // Panel 4: impulse response
+    const py2 = 6 + 3*rh;
+    panelFrame(rx, py2, rw, rh-4, 'impulse response h[n]');
+    const Nir = 128;
+    const h = impulseResponse(b, a, Nir);
+    let hMax = 1e-9;
+    for (const v of h) if (Math.abs(v)>hMax) hMax=Math.abs(v);
+    ctx.strokeStyle='#4a9de8'; ctx.lineWidth=1;
+    for (let n=0;n<Nir;n++){
+      const xx = rx+4 + (rw-8)*n/(Nir-1);
+      const yy0 = py2+18 + (rh-4-24)/2;
+      const yy = yy0 - h[n]/hMax * ((rh-4-24)/2 - 2);
+      ctx.beginPath(); ctx.moveTo(xx,yy0); ctx.lineTo(xx,yy); ctx.stroke();
+    }
+    eqEl.textContent = formatCoeffs(b, a);
+  }
+  function panelFrame(x,y,w,h,label){
+    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(x, y+14, w, h-14);
+    ctx.fillStyle='#8a8d9a'; ctx.font="11px 'Lucida Console', monospace";
+    ctx.fillText(label, x+6, y+12);
+  }
+  // --- interactions ---
+  function pickNear(px, py, tol){
+    const pr = planeRect();
+    if (px < pr.x || px > pr.x + pr.s) return null;
+    for (let i=0;i<poles.length;i++){
+      const p = planeToCanvas(poles[i].re, poles[i].im);
+      if (Math.hypot(p.x-px, p.y-py) < tol) return {type:'pole', idx:i};
+    }
+    for (let i=0;i<zeros.length;i++){
+      const p = planeToCanvas(zeros[i].re, zeros[i].im);
+      if (Math.hypot(p.x-px, p.y-py) < tol) return {type:'zero', idx:i};
+    }
+    return null;
+  }
+  function addConj(arr, re, im){
+    arr.push({re, im});
+    if (pairEl.checked && Math.abs(im)>1e-4) arr.push({re, im:-im});
+  }
+  c.addEventListener('mousedown', e=>{
+    const rect = c.getBoundingClientRect();
+    const px = e.clientX - rect.left, py = e.clientY - rect.top;
+    const hit = pickNear(px, py, 10);
+    if (hit){
+      drag = hit;
+      return;
+    }
+    // create new
+    const pr = planeRect();
+    if (px < pr.x || px > pr.x + pr.s) return;
+    const p = canvasToPlane(px, py);
+    if (e.shiftKey) addConj(poles, p.re, p.im);
+    else addConj(zeros, p.re, p.im);
+    draw();
+  });
+  c.addEventListener('mousemove', e=>{
+    if (!drag) return;
+    const rect = c.getBoundingClientRect();
+    const px = e.clientX - rect.left, py = e.clientY - rect.top;
+    const p = canvasToPlane(px, py);
+    const arr = drag.type==='pole' ? poles : zeros;
+    const it = arr[drag.idx];
+    if (!it) { drag=null; return; }
+    // find conjugate partner (if present) so we can move it in lockstep
+    let partnerIdx = -1;
+    if (pairEl.checked && Math.abs(it.im)>1e-4){
+      for (let j=0;j<arr.length;j++) if (j!==drag.idx && Math.abs(arr[j].re-it.re)<1e-4 && Math.abs(arr[j].im+it.im)<1e-4){ partnerIdx=j; break; }
+    }
+    it.re = p.re; it.im = p.im;
+    if (partnerIdx>=0){ arr[partnerIdx].re = p.re; arr[partnerIdx].im = -p.im; }
+    draw();
+  });
+  window.addEventListener('mouseup', ()=>{ drag=null; });
+  c.addEventListener('dblclick', e=>{
+    const rect = c.getBoundingClientRect();
+    const px = e.clientX - rect.left, py = e.clientY - rect.top;
+    const hit = pickNear(px, py, 10);
+    if (!hit) return;
+    const arr = hit.type==='pole' ? poles : zeros;
+    const it = arr[hit.idx];
+    // remove conj partner too
+    let partnerIdx = -1;
+    if (Math.abs(it.im)>1e-4){
+      for (let j=0;j<arr.length;j++) if (j!==hit.idx && Math.abs(arr[j].re-it.re)<1e-4 && Math.abs(arr[j].im+it.im)<1e-4){ partnerIdx=j; break; }
+    }
+    arr.splice(hit.idx,1);
+    if (partnerIdx>=0){
+      if (partnerIdx>hit.idx) partnerIdx--;
+      arr.splice(partnerIdx,1);
+    }
+    draw();
+  });
+  kEl.addEventListener('input', draw);
+  logEl.addEventListener('change', draw);
+  pairEl.addEventListener('change', draw);
+  btnRes.addEventListener('click', ()=>preset('res'));
+  btnNot.addEventListener('click', ()=>preset('notch'));
+  btnBW.addEventListener('click', ()=>preset('bw'));
+  btnClr.addEventListener('click', ()=>{ poles.length=0; zeros.length=0; draw(); });
+  window.addEventListener('resize', setup);
+  setup();
+})();
+
+// ---- CH 5: triple panel mag/phase/gd ---------------------------
+(function frTripleDemo(){
+  const c = document.getElementById('frTriple'); if(!c) return;
+  const sel = document.getElementById('frSel'), dbEl = document.getElementById('frDb');
+  let W=0, H=360, ctx=null;
+  function coefs(kind){
+    if (kind==='lp1') return { b:[0.1], a:[1,-0.9] };
+    if (kind==='res'){ const r=0.95, w0=0.6; return { b:[1], a:[1,-2*r*Math.cos(w0), r*r] }; }
+    if (kind==='notch'){ const r=0.97, w0=0.8; return { b:[1,-2*Math.cos(w0),1], a:[1,-2*r*Math.cos(w0), r*r] }; }
+    if (kind==='fir9'){
+      const L=9; const b=new Array(L).fill(0); let s=0;
+      for(let i=0;i<L;i++){ const w=0.5-0.5*Math.cos(2*Math.PI*i/(L-1)); b[i]=w*sinc((i-(L-1)/2)*0.25*Math.PI); s+=b[i]; }
+      for(let i=0;i<L;i++) b[i]/=s;
+      return { b, a:[1] };
+    }
+    if (kind==='biqpk'){
+      const w0=1.0, Q=4, A=Math.pow(10, 8/40);
+      const alpha = Math.sin(w0)/(2*Q);
+      const b0=1+alpha*A, b1=-2*Math.cos(w0), b2=1-alpha*A;
+      const a0=1+alpha/A, a1=-2*Math.cos(w0), a2=1-alpha/A;
+      return { b:[b0/a0,b1/a0,b2/a0], a:[1,a1/a0,a2/a0] };
+    }
+    return { b:[1], a:[1] };
+  }
+  function sinc(x){ return Math.abs(x)<1e-9?1:Math.sin(x)/x; }
+  function setup(){ W=fitWidth(c); ctx=setupCanvas(c,W,H); draw(); }
+  function draw(){
+    if(!ctx) return;
+    ctx.fillStyle='#12141c'; ctx.fillRect(0,0,W,H);
+    const { b, a } = coefs(sel.value);
+    const K=512;
+    const mag=new Float32Array(K);
+    for (let k=0;k<K;k++){
+      const w=Math.PI*k/(K-1);
+      const Hv=freqz(b,a,w);
+      mag[k]=Math.sqrt(Hv.re*Hv.re+Hv.im*Hv.im);
+    }
+    const { gd, phase } = groupDelay(b,a,K);
+    const padL=48, padR=10, padT=14, padB=20;
+    const pw=W-padL-padR, ph=(H-padT-padB-8)/3;
+    drawPanel(padL, padT, pw, ph, 'magnitude'+(dbEl.checked?' dB':''), mag, dbEl.checked?'db':'lin', '#e8a44a');
+    drawPanel(padL, padT+ph+4, pw, ph, 'phase (rad)', phase, 'lin', '#b06ae8');
+    drawPanel(padL, padT+2*ph+8, pw, ph, 'group delay (samples)', gd, 'lin', '#5ce89a');
+    // x-axis labels on bottom panel
+    ctx.fillStyle='#8a8d9a'; ctx.font="10px 'Lucida Console', monospace";
+    ctx.fillText('0', padL, H-5);
+    ctx.fillText('w = pi/2', padL+pw/2-18, H-5);
+    ctx.fillText('pi', padL+pw-12, H-5);
+  }
+  function drawPanel(x,y,w,h,lbl,arr,mode,col){
+    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(x,y,w,h);
+    ctx.fillStyle='#8a8d9a'; ctx.font="10px 'Lucida Console', monospace";
+    ctx.fillText(lbl, x+4, y-2);
+    const K=arr.length;
+    let lo=Infinity, hi=-Infinity;
+    if (mode==='db'){
+      let M=1e-12; for(const v of arr) if(v>M) M=v;
+      lo=-60; hi=6;
+      ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.beginPath();
+      for (let k=0;k<K;k++){
+        const d=20*Math.log10(Math.max(1e-6,arr[k]/M));
+        const dd=Math.max(lo,Math.min(hi,d));
+        const xx=x+w*k/(K-1);
+        const yy=y+h*(1-(dd-lo)/(hi-lo));
+        if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+      }
+      ctx.stroke();
+      ctx.fillStyle='#8a8d9a'; ctx.fillText('0', x-18, y+10);
+      ctx.fillText('-60', x-22, y+h-2);
+    } else {
+      for(const v of arr){ if(v<lo) lo=v; if(v>hi) hi=v; }
+      const rng=Math.max(1e-9, hi-lo);
+      ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.beginPath();
+      for (let k=0;k<K;k++){
+        const xx=x+w*k/(K-1);
+        const yy=y+h*(1-(arr[k]-lo)/rng);
+        if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+      }
+      ctx.stroke();
+      ctx.fillStyle='#8a8d9a'; ctx.fillText(hi.toFixed(2), x-36, y+10);
+      ctx.fillText(lo.toFixed(2), x-36, y+h-2);
+    }
+  }
+  sel.addEventListener('change', draw);
+  dbEl.addEventListener('change', draw);
+  window.addEventListener('resize', setup);
+  setup();
+})();
+
+// ---- CH 6: elementary filters explorer -------------------------
+(function elemFiltDemo(){
+  const c = document.getElementById('elemFilt'); if(!c) return;
+  const sel=document.getElementById('efSel');
+  const wEl=document.getElementById('efW'), wVal=document.getElementById('efWVal');
+  const qEl=document.getElementById('efQ'), qVal=document.getElementById('efQVal');
+  const gEl=document.getElementById('efG'), gVal=document.getElementById('efGVal');
+  const coefEl=document.getElementById('efCoef');
+  let W=0, H=420, ctx=null;
+  function coefs(){
+    const w0 = Math.PI * parseFloat(wEl.value);
+    const Q = parseFloat(qEl.value);
+    const dB = parseFloat(gEl.value);
+    const A = Math.pow(10, dB/40);
+    const alpha = Math.sin(w0)/(2*Q);
+    const cw = Math.cos(w0);
+    const k = sel.value;
+    if (k==='1plp'){
+      const p = Math.exp(-w0);
+      return { b:[1-p], a:[1, -p], zeros:[], poles:[{re:p, im:0}] };
+    }
+    if (k==='1zlp'){
+      return { b:[0.5, 0.5], a:[1], zeros:[{re:-1, im:0}], poles:[] };
+    }
+    if (k==='reson'){
+      const r = Math.max(0.05, 1 - 1/(2*Q));
+      return { b:[1], a:[1, -2*r*cw, r*r], zeros:[], poles:[{re:r*cw,im:r*Math.sin(w0)},{re:r*cw,im:-r*Math.sin(w0)}] };
+    }
+    if (k==='notch'){
+      const b0=1, b1=-2*cw, b2=1;
+      const a0=1+alpha, a1=-2*cw, a2=1-alpha;
+      return { b:[b0/a0,b1/a0,b2/a0], a:[1,a1/a0,a2/a0],
+        zeros:[{re:cw,im:Math.sin(w0)},{re:cw,im:-Math.sin(w0)}],
+        poles:polesFromA([1,a1/a0,a2/a0]) };
+    }
+    if (k==='peak'){
+      const b0=1+alpha*A, b1=-2*cw, b2=1-alpha*A;
+      const a0=1+alpha/A, a1=-2*cw, a2=1-alpha/A;
+      return { b:[b0/a0,b1/a0,b2/a0], a:[1,a1/a0,a2/a0],
+        zeros:polesFromA([b0/a0,b1/a0,b2/a0]),
+        poles:polesFromA([1,a1/a0,a2/a0]) };
+    }
+    if (k==='lsh'){
+      const beta = Math.sqrt(A)/Q;
+      const b0 = A*((A+1) - (A-1)*cw + beta*Math.sin(w0));
+      const b1 = 2*A*((A-1) - (A+1)*cw);
+      const b2 = A*((A+1) - (A-1)*cw - beta*Math.sin(w0));
+      const a0 = (A+1) + (A-1)*cw + beta*Math.sin(w0);
+      const a1 = -2*((A-1) + (A+1)*cw);
+      const a2 = (A+1) + (A-1)*cw - beta*Math.sin(w0);
+      const B=[b0/a0,b1/a0,b2/a0], Aa=[1,a1/a0,a2/a0];
+      return { b:B, a:Aa, zeros:polesFromA(B), poles:polesFromA(Aa) };
+    }
+    if (k==='hsh'){
+      const beta = Math.sqrt(A)/Q;
+      const b0 = A*((A+1) + (A-1)*cw + beta*Math.sin(w0));
+      const b1 = -2*A*((A-1) + (A+1)*cw);
+      const b2 = A*((A+1) + (A-1)*cw - beta*Math.sin(w0));
+      const a0 = (A+1) - (A-1)*cw + beta*Math.sin(w0);
+      const a1 = 2*((A-1) - (A+1)*cw);
+      const a2 = (A+1) - (A-1)*cw - beta*Math.sin(w0);
+      const B=[b0/a0,b1/a0,b2/a0], Aa=[1,a1/a0,a2/a0];
+      return { b:B, a:Aa, zeros:polesFromA(B), poles:polesFromA(Aa) };
+    }
+    return { b:[1], a:[1], zeros:[], poles:[] };
+  }
+  function polesFromA(a){
+    // For quadratic 1 + a1 z^-1 + a2 z^-2, poles are roots of z^2 + a1 z + a2 = 0
+    if (a.length===3){
+      const a1=a[1], a2=a[2];
+      const d=a1*a1 - 4*a2;
+      if (d>=0){ const sd=Math.sqrt(d); return [{re:(-a1+sd)/2, im:0}, {re:(-a1-sd)/2, im:0}]; }
+      const sd=Math.sqrt(-d); return [{re:-a1/2, im:sd/2}, {re:-a1/2, im:-sd/2}];
+    }
+    if (a.length===2) return [{re:-a[1], im:0}];
+    return [];
+  }
+  function setup(){ W=fitWidth(c); ctx=setupCanvas(c,W,H); draw(); }
+  function draw(){
+    if(!ctx) return;
+    wVal.textContent = parseFloat(wEl.value).toFixed(3);
+    qVal.textContent = parseFloat(qEl.value).toFixed(2);
+    gVal.textContent = parseFloat(gEl.value).toFixed(1);
+    ctx.fillStyle='#12141c'; ctx.fillRect(0,0,W,H);
+    const { b, a, zeros, poles } = coefs();
+    // Layout: top-left z-plane, top-right magnitude, bottom-left IR, bottom-right phase
+    const qw = W/2, qh = H/2;
+    // z-plane
+    const cx=qw/2, cy=qh/2, R=Math.min(qw,qh)*0.36;
+    ctx.strokeStyle='#2a2d3a';
+    ctx.beginPath(); ctx.moveTo(10,cy); ctx.lineTo(qw-10,cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx,10); ctx.lineTo(cx,qh-10); ctx.stroke();
+    ctx.strokeStyle='#8a8d9a'; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
+    ctx.strokeStyle='#e85a7a'; ctx.lineWidth=2;
+    for (const p of poles){ const px=cx+R*p.re, py=cy-R*p.im; ctx.beginPath(); ctx.moveTo(px-6,py-6); ctx.lineTo(px+6,py+6); ctx.moveTo(px-6,py+6); ctx.lineTo(px+6,py-6); ctx.stroke(); }
+    ctx.strokeStyle='#4a9de8'; for (const z of zeros){ const px=cx+R*z.re, py=cy-R*z.im; ctx.beginPath(); ctx.arc(px,py,6,0,Math.PI*2); ctx.stroke(); }
+    ctx.fillStyle='#8a8d9a'; ctx.font="10px 'Lucida Console', monospace"; ctx.fillText('z-plane', 8, 14);
+    // Magnitude
+    const K=400; const mag=new Float32Array(K);
+    let M=1e-9;
+    for (let k=0;k<K;k++){
+      const w=Math.PI*k/(K-1);
+      const Hv=freqz(b,a,w);
+      mag[k]=Math.sqrt(Hv.re*Hv.re+Hv.im*Hv.im);
+      if (mag[k]>M) M=mag[k];
+    }
+    const mx=qw+8, my=20, mww=qw-16, mhh=qh-30;
+    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(mx,my,mww,mhh);
+    ctx.strokeStyle='#e8a44a'; ctx.lineWidth=1.5; ctx.beginPath();
+    for (let k=0;k<K;k++){
+      const d=20*Math.log10(Math.max(1e-5,mag[k]));
+      const v=Math.max(-48,Math.min(18,d));
+      const xx=mx+mww*k/(K-1);
+      const yy=my + mhh*(1 - (v+48)/66);
+      if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+    ctx.fillStyle='#8a8d9a'; ctx.fillText('|H(e^jw)| dB', qw+8, 14);
+    // IR
+    const ir = impulseResponse(b,a,64);
+    let hM=1e-9; for (const v of ir) if (Math.abs(v)>hM) hM=Math.abs(v);
+    const ix=8, iy=qh+20, iw=qw-16, ih=qh-30;
+    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(ix,iy,iw,ih);
+    ctx.strokeStyle='#4a9de8'; ctx.lineWidth=1;
+    for (let n=0;n<64;n++){
+      const xx=ix+iw*n/63, y0=iy+ih/2;
+      const yy=y0 - ir[n]/hM*(ih/2-2);
+      ctx.beginPath(); ctx.moveTo(xx,y0); ctx.lineTo(xx,yy); ctx.stroke();
+      ctx.beginPath(); ctx.arc(xx,yy,1.5,0,Math.PI*2); ctx.fillStyle='#4a9de8'; ctx.fill();
+    }
+    ctx.fillStyle='#8a8d9a'; ctx.fillText('impulse response h[n]', 8, qh+14);
+    // Phase
+    const ph=new Float32Array(K);
+    for (let k=0;k<K;k++){
+      const w=Math.PI*k/(K-1); const Hv=freqz(b,a,w); ph[k]=Math.atan2(Hv.im,Hv.re);
+    }
+    for (let k=1;k<K;k++){ let d=ph[k]-ph[k-1]; while(d>Math.PI){ph[k]-=2*Math.PI;d=ph[k]-ph[k-1];} while(d<-Math.PI){ph[k]+=2*Math.PI;d=ph[k]-ph[k-1];} }
+    const px_=qw+8, py_=qh+20, pw_=qw-16, pH_=qh-30;
+    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(px_,py_,pw_,pH_);
+    let pLo=Infinity, pHi=-Infinity; for(const v of ph){ if(v<pLo) pLo=v; if(v>pHi) pHi=v; }
+    const pRng=Math.max(1e-9,pHi-pLo);
+    ctx.strokeStyle='#b06ae8'; ctx.lineWidth=1.5; ctx.beginPath();
+    for (let k=0;k<K;k++){
+      const xx=px_+pw_*k/(K-1);
+      const yy=py_+pH_*(1-(ph[k]-pLo)/pRng);
+      if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+    ctx.fillStyle='#8a8d9a'; ctx.fillText('phase (unwrapped)', qw+8, qh+14);
+    // coefficients text
+    coefEl.textContent =
+      'b = ['+b.map(v=>v.toFixed(4)).join(', ')+']\n'+
+      'a = ['+a.map(v=>v.toFixed(4)).join(', ')+']';
+  }
+  [sel, wEl, qEl, gEl].forEach(e=>e.addEventListener('input', draw));
+  sel.addEventListener('change', draw);
+  window.addEventListener('resize', setup);
+  setup();
+})();
+
+// ---- CH 7: min phase / reflection ------------------------------
+(function minPhaseDemo(){
+  const c = document.getElementById('minPhase'); if(!c) return;
+  const rEl=document.getElementById('mpR'), rVal=document.getElementById('mpRVal');
+  const aEl=document.getElementById('mpA'), aVal=document.getElementById('mpAVal');
+  const flip=document.getElementById('mpFlip');
+  let W=0, H=360, ctx=null;
+  function setup(){ W=fitWidth(c); ctx=setupCanvas(c,W,H); draw(); }
+  function draw(){
+    if(!ctx) return;
+    const r=parseFloat(rEl.value), a=parseFloat(aEl.value);
+    rVal.textContent=r.toFixed(2); aVal.textContent=a.toFixed(2)+' rad';
+    ctx.fillStyle='#12141c'; ctx.fillRect(0,0,W,H);
+    // two zeros at (r, +/- a) -> b = [1, -2 r cos a, r^2]
+    const b=[1, -2*r*Math.cos(a), r*r];
+    const aC=[1];
+    // Left: z-plane
+    const ph=W/2, qh=H;
+    const cx=ph/2, cy=qh/2, R=Math.min(ph,qh)*0.36;
+    ctx.strokeStyle='#2a2d3a';
+    ctx.beginPath(); ctx.moveTo(10,cy); ctx.lineTo(ph-10,cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx,10); ctx.lineTo(cx,qh-10); ctx.stroke();
+    ctx.strokeStyle='#8a8d9a'; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
+    // zero markers
+    const rDisp = Math.min(r, 3.4);
+    ctx.strokeStyle='#4a9de8'; ctx.lineWidth=2;
+    function drawO(xx,yy){ ctx.beginPath(); ctx.arc(xx,yy,6,0,Math.PI*2); ctx.stroke(); }
+    drawO(cx + R*rDisp*Math.cos(a), cy - R*rDisp*Math.sin(a));
+    drawO(cx + R*rDisp*Math.cos(a), cy + R*rDisp*Math.sin(a));
+    // reflected (dashed)
+    const rInv=1/rDisp;
+    ctx.setLineDash([4,4]); ctx.strokeStyle='#4a9de844';
+    drawO(cx + R*rInv*Math.cos(a), cy - R*rInv*Math.sin(a));
+    drawO(cx + R*rInv*Math.cos(a), cy + R*rInv*Math.sin(a));
+    ctx.setLineDash([]);
+    ctx.fillStyle='#8a8d9a'; ctx.font="10px 'Lucida Console', monospace";
+    ctx.fillText('zero (solid) and its reciprocal (dashed)', 6, 14);
+    ctx.fillStyle = r<1? '#5ce89a':'#e85a7a';
+    ctx.font="bold 11px 'Lucida Console', monospace";
+    ctx.fillText(r<1?'MIN PHASE':'MAX PHASE', 6, qh-8);
+    // Right upper: magnitude (show both: original and reflected)
+    const mx=ph+8, my=20, mww=W-ph-16, mhh=qh/2-30;
+    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(mx,my,mww,mhh);
+    const K=256;
+    const bRef=[1, -2*(1/r)*Math.cos(a), 1/(r*r)];
+    // Normalise both by their peak to show magnitudes on the same scale
+    function computeMag(bb){
+      const arr=new Float32Array(K); let M=1e-9;
+      for(let k=0;k<K;k++){ const w=Math.PI*k/(K-1); const Hv=freqz(bb,[1],w); arr[k]=Math.sqrt(Hv.re*Hv.re+Hv.im*Hv.im); if(arr[k]>M) M=arr[k]; }
+      return { arr, M };
+    }
+    const m1=computeMag(b), m2=computeMag(bRef);
+    // Normalise each, draw
+    ctx.strokeStyle='#e8a44a'; ctx.lineWidth=1.5; ctx.beginPath();
+    for(let k=0;k<K;k++){ const xx=mx+mww*k/(K-1); const yy=my+mhh*(1-m1.arr[k]/m1.M); if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); }
+    ctx.stroke();
+    ctx.strokeStyle='#4a9de866'; ctx.setLineDash([5,3]); ctx.beginPath();
+    for(let k=0;k<K;k++){ const xx=mx+mww*k/(K-1); const yy=my+mhh*(1-m2.arr[k]/m2.M); if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); }
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#8a8d9a'; ctx.fillText('|H| (solid) vs |H_reflected| (dashed) — identical shape', ph+8, 14);
+    // Right lower: phase
+    const px_=ph+8, py_=qh/2+16, pw_=W-ph-16, pH_=qh/2-28;
+    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(px_,py_,pw_,pH_);
+    function computePh(bb){
+      const arr=new Float32Array(K);
+      for(let k=0;k<K;k++){ const w=Math.PI*k/(K-1); const Hv=freqz(bb,[1],w); arr[k]=Math.atan2(Hv.im,Hv.re); }
+      for(let k=1;k<K;k++){ let d=arr[k]-arr[k-1]; while(d>Math.PI){arr[k]-=2*Math.PI;d=arr[k]-arr[k-1];} while(d<-Math.PI){arr[k]+=2*Math.PI;d=arr[k]-arr[k-1];} }
+      return arr;
+    }
+    const p1=computePh(b), p2=computePh(bRef);
+    let lo=Infinity,hi=-Infinity;
+    for(const v of p1){ if(v<lo) lo=v; if(v>hi) hi=v; }
+    for(const v of p2){ if(v<lo) lo=v; if(v>hi) hi=v; }
+    const rng=Math.max(1e-9,hi-lo);
+    ctx.strokeStyle='#b06ae8'; ctx.lineWidth=1.5; ctx.beginPath();
+    for(let k=0;k<K;k++){ const xx=px_+pw_*k/(K-1); const yy=py_+pH_*(1-(p1[k]-lo)/rng); if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); }
+    ctx.stroke();
+    ctx.strokeStyle='#5ce89a'; ctx.setLineDash([5,3]); ctx.beginPath();
+    for(let k=0;k<K;k++){ const xx=px_+pw_*k/(K-1); const yy=py_+pH_*(1-(p2[k]-lo)/rng); if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); }
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#8a8d9a'; ctx.fillText('phase: r<1 (purple) vs r>1 (green) — different', ph+8, qh/2+14);
+  }
+  rEl.addEventListener('input', draw);
+  aEl.addEventListener('input', draw);
+  flip.addEventListener('click', ()=>{ rEl.value = (1/parseFloat(rEl.value)).toFixed(2); draw(); });
+  window.addEventListener('resize', setup);
+  setup();
+})();
+
+// ---- CH 8: structure diagrams ----------------------------------
+(function structDemo(){
+  const c = document.getElementById('structDiag'); if(!c) return;
+  const sel=document.getElementById('stSel');
+  let W=0, H=420, ctx=null;
+  function setup(){ W=fitWidth(c); ctx=setupCanvas(c,W,H); draw(); }
+  function node(x,y,r,label,col){
+    ctx.strokeStyle=col||'#4a9de8'; ctx.fillStyle='#12141c'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=col||'#d4d6e0'; ctx.font="12px 'Lucida Console', monospace";
+    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(label, x, y);
+    ctx.textAlign='start'; ctx.textBaseline='alphabetic';
+  }
+  function delay(x,y){
+    ctx.strokeStyle='#e85a7a'; ctx.fillStyle='#12141c'; ctx.lineWidth=1.5;
+    ctx.fillRect(x-18,y-14,36,28); ctx.strokeRect(x-18,y-14,36,28);
+    ctx.fillStyle='#e85a7a'; ctx.font="11px 'Lucida Console', monospace";
+    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('z^-1', x, y);
+    ctx.textAlign='start'; ctx.textBaseline='alphabetic';
+  }
+  function mul(x,y,label){
+    ctx.strokeStyle='#e8a44a'; ctx.fillStyle='#12141c'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(x-12,y-10); ctx.lineTo(x+12,y); ctx.lineTo(x-12,y+10); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#e8a44a'; ctx.font="11px 'Lucida Console', monospace";
+    ctx.fillText(label, x-8, y-14);
+  }
+  function arrow(x1,y1,x2,y2){
+    ctx.strokeStyle='#8a8d9a'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    // small arrowhead
+    const ang=Math.atan2(y2-y1,x2-x1);
+    ctx.beginPath();
+    ctx.moveTo(x2,y2);
+    ctx.lineTo(x2-6*Math.cos(ang-0.4), y2-6*Math.sin(ang-0.4));
+    ctx.lineTo(x2-6*Math.cos(ang+0.4), y2-6*Math.sin(ang+0.4));
+    ctx.closePath(); ctx.fillStyle='#8a8d9a'; ctx.fill();
+  }
+  function draw(){
+    if(!ctx) return;
+    ctx.fillStyle='#12141c'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#8a8d9a'; ctx.font="11px 'Lucida Console', monospace";
+    const kind=sel.value;
+    if (kind==='df1') drawDF1();
+    else if (kind==='df2') drawDF2();
+    else if (kind==='tdf2') drawTDF2();
+    else drawCascade();
+  }
+  function drawDF1(){
+    // x --> feed-forward (delays b0..b2), sum at w, subtract feedback (delays a1..a2 of y)
+    const y0=H/2;
+    ctx.fillStyle='#d4d6e0'; ctx.font="12px 'Lucida Console', monospace";
+    ctx.fillText("Direct Form I", 12, 24);
+    // top: delay line for x
+    const xs=[60,160,260];
+    node(xs[0], y0-80, 10, 'x', '#4a9de8');
+    delay(xs[1], y0-80); delay(xs[2], y0-80);
+    arrow(xs[0]+10,y0-80, xs[1]-18,y0-80);
+    arrow(xs[1]+18,y0-80, xs[2]-18,y0-80);
+    // taps
+    const tapX=[xs[0], xs[1], xs[2]];
+    const lbl=['b0','b1','b2'];
+    for (let i=0;i<3;i++){
+      arrow(tapX[i], y0-80+12, tapX[i], y0-30);
+      mul(tapX[i], y0-20, lbl[i]);
+      arrow(tapX[i], y0-12, tapX[i], y0+10);
+    }
+    // sum
+    node(340, y0, 14, '+', '#5ce89a');
+    for (let i=0;i<3;i++) arrow(tapX[i], y0, 340-14, y0);
+    // feedback line y
+    node(420, y0, 10, 'y', '#5ce89a');
+    arrow(354, y0, 410, y0);
+    // y delays
+    const ys=[480,580];
+    delay(ys[0], y0+80); delay(ys[1], y0+80);
+    arrow(420, y0+10, 420, y0+80); arrow(420, y0+80, ys[0]-18, y0+80);
+    arrow(ys[0]+18, y0+80, ys[1]-18, y0+80);
+    // taps from y delay line back up -> subtract at sum
+    const yTap=[420, ys[0], ys[1]];
+    const lblA=['','-a1','-a2'];
+    for (let i=1;i<3;i++){
+      arrow(yTap[i], y0+80-12, yTap[i], y0+30);
+      mul(yTap[i], y0+20, lblA[i]);
+      arrow(yTap[i], y0+10, 340+10*Math.cos(Math.PI+0.3), y0);
+    }
+  }
+  function drawDF2(){
+    const y0=H/2;
+    ctx.fillStyle='#d4d6e0'; ctx.font="12px 'Lucida Console', monospace";
+    ctx.fillText("Direct Form II (canonical)", 12, 24);
+    // Central summing node for v[n]
+    node(100, y0, 14, '+', '#5ce89a');
+    node(40, y0, 10, 'x', '#4a9de8');
+    arrow(50, y0, 86, y0);
+    // delay chain down
+    delay(100, y0+80); delay(100, y0+160);
+    arrow(100, y0+14, 100, y0+66);
+    arrow(100, y0+94, 100, y0+146);
+    // feedback taps (-a1, -a2)
+    mul(180, y0+80, '-a1'); arrow(118, y0+80, 168, y0+80);
+    arrow(192, y0+80, 100+14, y0+1);
+    mul(180, y0+160, '-a2'); arrow(118, y0+160, 168, y0+160);
+    arrow(192, y0+160, 100+14, y0+2);
+    // feed-forward taps (b0, b1, b2) to right summing node producing y
+    node(360, y0, 14, '+', '#5ce89a');
+    mul(260, y0, 'b0'); arrow(114, y0, 248, y0); arrow(272, y0, 346, y0);
+    mul(260, y0+80, 'b1'); arrow(118, y0+80, 248, y0+80); arrow(272, y0+80, 360-14, y0);
+    mul(260, y0+160, 'b2'); arrow(118, y0+160, 248, y0+160); arrow(272, y0+160, 360-14, y0);
+    node(420, y0, 10, 'y', '#5ce89a'); arrow(374, y0, 410, y0);
+  }
+  function drawTDF2(){
+    const y0=H/2;
+    ctx.fillStyle='#d4d6e0'; ctx.font="12px 'Lucida Console', monospace";
+    ctx.fillText("Transposed Direct Form II", 12, 24);
+    // Input at left -> multipliers b0, b1, b2 into summers with delay chain
+    node(40, y0, 10, 'x', '#4a9de8');
+    // multipliers at three heights, sums cascade right
+    const sx=[180, 320, 460];
+    node(sx[0], y0, 14, '+', '#5ce89a');
+    node(sx[1], y0, 14, '+', '#5ce89a');
+    node(sx[2], y0, 14, '+', '#5ce89a');
+    mul(110, y0, 'b0'); arrow(50, y0, 98, y0); arrow(122, y0, sx[0]-14, y0);
+    mul(250, y0-60, 'b1'); arrow(sx[0]+14, y0, sx[0]+14, y0-60); arrow(sx[0]+14, y0-60, 238, y0-60); arrow(262, y0-60, sx[1]-14, y0);
+    mul(390, y0-60, 'b2'); arrow(sx[1]+14, y0, sx[1]+14, y0-60); arrow(sx[1]+14, y0-60, 378, y0-60); arrow(402, y0-60, sx[2]-14, y0);
+    node(520, y0, 10, 'y', '#5ce89a'); arrow(sx[2]+14, y0, 510, y0);
+    // delays between summers with feedback from y
+    delay(sx[0]+70, y0); delay(sx[1]+70, y0);
+    arrow(sx[0]+14, y0, sx[0]+52, y0); arrow(sx[0]+88, y0, sx[1]-14, y0);
+    arrow(sx[1]+14, y0, sx[1]+52, y0); arrow(sx[1]+88, y0, sx[2]-14, y0);
+    // feedback -a1, -a2 taps from y
+    mul(sx[0]+40, y0+80, '-a1'); arrow(520, y0+10, 520, y0+80); arrow(520, y0+80, sx[0]+52, y0+80); arrow(sx[0]+28, y0+80, sx[0]+14, y0+14);
+    mul(sx[1]+40, y0+80, '-a2'); arrow(520, y0+80, sx[1]+52, y0+80); arrow(sx[1]+28, y0+80, sx[1]+14, y0+14);
+  }
+  function drawCascade(){
+    const y0=H/2;
+    ctx.fillStyle='#d4d6e0'; ctx.font="12px 'Lucida Console', monospace";
+    ctx.fillText("Cascade of two biquads: H(z) = H1(z) H2(z)", 12, 24);
+    // two boxes in series
+    function box(x, label){
+      ctx.strokeStyle='#4a9de8'; ctx.fillStyle='#12141c'; ctx.lineWidth=1.5;
+      ctx.fillRect(x,y0-40,140,80); ctx.strokeRect(x,y0-40,140,80);
+      ctx.fillStyle='#d4d6e0'; ctx.font="12px 'Lucida Console', monospace";
+      ctx.textAlign='center'; ctx.fillText(label, x+70, y0-8);
+      ctx.fillText('2nd-order section', x+70, y0+12);
+      ctx.textAlign='start';
+    }
+    node(40, y0, 10, 'x', '#4a9de8');
+    box(80, 'H1(z)');
+    box(280, 'H2(z)');
+    node(460, y0, 10, 'y', '#5ce89a');
+    arrow(50, y0, 78, y0); arrow(220, y0, 278, y0); arrow(420, y0, 450, y0);
+    ctx.fillStyle='#8a8d9a'; ctx.font="10px 'Lucida Console', monospace";
+    ctx.fillText('Intermediate v', 222, y0-46);
+  }
+  sel.addEventListener('change', draw);
+  window.addEventListener('resize', setup);
+  setup();
+})();
+
+// ---- CH 9: designer (FIR window / Butterworth) -----------------
+(function designer(){
+  const c = document.getElementById('designer'); if(!c) return;
+  const mEl=document.getElementById('dsMethod');
+  const tEl=document.getElementById('dsType');
+  const fcEl=document.getElementById('dsFc'), fcVal=document.getElementById('dsFcVal');
+  const bwEl=document.getElementById('dsBw'), bwVal=document.getElementById('dsBwVal');
+  const nEl=document.getElementById('dsN'), nVal=document.getElementById('dsNVal');
+  const wEl=document.getElementById('dsWin');
+  let W=0, H=440, ctx=null;
+  function sinc(x){ return Math.abs(x)<1e-9?1:Math.sin(x)/x; }
+  function window(L, kind){
+    const w=new Float32Array(L);
+    if (kind==='rect'){ w.fill(1); return w; }
+    if (kind==='hann'){ for(let n=0;n<L;n++) w[n]=0.5-0.5*Math.cos(2*Math.PI*n/(L-1)); return w; }
+    if (kind==='hamming'){ for(let n=0;n<L;n++) w[n]=0.54-0.46*Math.cos(2*Math.PI*n/(L-1)); return w; }
+    for(let n=0;n<L;n++) w[n]=0.42-0.5*Math.cos(2*Math.PI*n/(L-1))+0.08*Math.cos(4*Math.PI*n/(L-1));
+    return w;
+  }
+  function designFIR(){
+    const fc = parseFloat(fcEl.value); // cutoff / pi
+    const bw = parseFloat(bwEl.value); // width / pi
+    const L = parseInt(nEl.value) | 1; // force odd
+    const win = window(L, wEl.value);
+    const type = tEl.value;
+    const h = new Float32Array(L);
+    const wc = fc*Math.PI;
+    const w1 = Math.max(0.01, (fc - bw/2))*Math.PI;
+    const w2 = Math.min(0.99, (fc + bw/2))*Math.PI;
+    for (let n=0;n<L;n++){
+      const k = n - (L-1)/2;
+      let v;
+      if (type==='lp') v = (k===0) ? wc/Math.PI : Math.sin(wc*k)/(Math.PI*k);
+      else if (type==='hp') v = (k===0) ? 1 - wc/Math.PI : -Math.sin(wc*k)/(Math.PI*k);
+      else if (type==='bp') v = (k===0) ? (w2-w1)/Math.PI : (Math.sin(w2*k)-Math.sin(w1*k))/(Math.PI*k);
+      else v = (k===0) ? 1 - (w2-w1)/Math.PI : -(Math.sin(w2*k)-Math.sin(w1*k))/(Math.PI*k);
+      h[n] = v*win[n];
+    }
+    return { b: Array.from(h), a: [1] };
+  }
+  function designBW(){
+    // Bilinear-transform low-pass Butterworth of order N, cutoff fc
+    // Analogue prototype poles: s_k = j e^{j pi (2k+1)/(2N)} scaled
+    const N = Math.max(1, Math.min(8, Math.floor(parseInt(nEl.value)/4)));
+    const fc = parseFloat(fcEl.value);
+    const bw = parseFloat(bwEl.value);
+    const type = tEl.value;
+    // pre-warp
+    const wc = Math.tan(Math.PI*fc/2) * 2;
+    // Generate analog poles (unit cutoff Butterworth)
+    const aPoles = [];
+    for (let k=0;k<N;k++){
+      const theta = Math.PI*(2*k + 1 + N)/(2*N);
+      aPoles.push({re:Math.cos(theta), im:Math.sin(theta)});
+    }
+    // scale for cutoff
+    const sc = wc/2; // approx (we will pass to bilinear s = (2/T)(1-z^-1)/(1+z^-1), T=1)
+    // Apply transform sp = (aPole * cutoff) -> LP transform s/sc; then bilinear.
+    // Using T=1: z = (2+s)/(2-s) for s = aPole*sc
+    const dPoles = aPoles.map(p=>{
+      const sr = p.re*sc, si=p.im*sc;
+      const nr = 2+sr, ni = si;
+      const dr = 2-sr, di = -si;
+      const denom = dr*dr + di*di;
+      return { re: (nr*dr + ni*di)/denom, im: (ni*dr - nr*di)/denom };
+    });
+    // zeros at s=infinity -> z=-1 (N of them), so N zeros at z=-1
+    const dZeros = [];
+    for (let k=0;k<N;k++) dZeros.push({re:-1, im:0});
+    // For high-pass, reflect: zero at z=1 (N of them), poles at 1/poles (magnitude-wise, careful) — do simple spectral-reverse of coefficients
+    const b0 = polyFromRoots(dZeros);
+    const a0 = polyFromRoots(dPoles);
+    // Normalise gain at DC for LP / at Nyquist for HP etc.
+    let b = b0.slice(), a = a0.slice();
+    if (type==='lp'){
+      // DC gain = sum(b)/sum(a)
+      const gb = b.reduce((s,v)=>s+v,0), ga = a.reduce((s,v)=>s+v,0);
+      const g = gb/ga;
+      b = b.map(v=>v/g);
+    } else if (type==='hp'){
+      // Spectral reverse in frequency: replace z -> -z -> coefficients sign-flip on odd indices
+      const bb = b.map((v,i)=>i%2?-v:v);
+      const aa = a.map((v,i)=>i%2?-v:v);
+      const gb = bb.reduce((s,v,i)=>s+v*((i%2)?-1:1),0);
+      const ga = aa.reduce((s,v,i)=>s+v*((i%2)?-1:1),0);
+      b = bb.map(v=>v/(gb/ga)); a = aa;
+    } else {
+      // bp / bs fallback: produce a LP and warn
+      const gb = b.reduce((s,v)=>s+v,0), ga = a.reduce((s,v)=>s+v,0);
+      b = b.map(v=>v/(gb/ga));
+    }
+    return { b, a };
+  }
+  function design(){
+    if (mEl.value==='win') return designFIR();
+    return designBW();
+  }
+  function setup(){ W=fitWidth(c); ctx=setupCanvas(c,W,H); draw(); }
+  function draw(){
+    if(!ctx) return;
+    fcVal.textContent = parseFloat(fcEl.value).toFixed(3);
+    bwVal.textContent = parseFloat(bwEl.value).toFixed(3);
+    nVal.textContent = nEl.value;
+    ctx.fillStyle='#12141c'; ctx.fillRect(0,0,W,H);
+    const { b, a } = design();
+    const K=400;
+    const mag=new Float32Array(K); let M=1e-9;
+    for(let k=0;k<K;k++){ const w=Math.PI*k/(K-1); const Hv=freqz(b,a,w); mag[k]=Math.sqrt(Hv.re*Hv.re+Hv.im*Hv.im); if(mag[k]>M) M=mag[k]; }
+    const { gd } = groupDelay(b,a,K);
+    const padL=50, padR=10, padT=14;
+    const rowH=(H-padT-20)/3;
+    // Panel 1: |H| dB
+    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(padL, padT, W-padL-padR, rowH);
+    ctx.fillStyle='#8a8d9a'; ctx.font="10px 'Lucida Console', monospace";
+    ctx.fillText('|H(e^jw)| dB', padL, padT-2);
+    ctx.strokeStyle='#e8a44a'; ctx.lineWidth=1.5; ctx.beginPath();
+    for(let k=0;k<K;k++){
+      const d=20*Math.log10(Math.max(1e-5, mag[k]));
+      const v=Math.max(-80, Math.min(6, d));
+      const xx=padL+(W-padL-padR)*k/(K-1);
+      const yy=padT+rowH*(1-(v+80)/86);
+      if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+    ctx.fillStyle='#8a8d9a'; ctx.fillText('0 dB', padL-34, padT+10);
+    ctx.fillText('-80', padL-28, padT+rowH-2);
+    // Panel 2: h[n]
+    const y2=padT+rowH+6;
+    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(padL, y2, W-padL-padR, rowH);
+    ctx.fillStyle='#8a8d9a'; ctx.fillText('impulse response h[n]', padL, y2-2);
+    const Nir = Math.min(200, Math.max(b.length+64, 100));
+    const h = impulseResponse(b,a,Nir);
+    let hM=1e-9; for(const v of h) if(Math.abs(v)>hM) hM=Math.abs(v);
+    ctx.strokeStyle='#4a9de8'; ctx.lineWidth=1;
+    const midY = y2+rowH/2;
+    ctx.beginPath(); ctx.moveTo(padL, midY); ctx.lineTo(W-padR, midY); ctx.strokeStyle='#2a2d3a'; ctx.stroke();
+    ctx.strokeStyle='#4a9de8';
+    for(let n=0;n<Nir;n++){
+      const xx=padL+(W-padL-padR)*n/(Nir-1);
+      const yy=midY - h[n]/hM*(rowH/2-3);
+      ctx.beginPath(); ctx.moveTo(xx,midY); ctx.lineTo(xx,yy); ctx.stroke();
+    }
+    // Panel 3: group delay
+    const y3=padT+2*rowH+12;
+    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(padL, y3, W-padL-padR, rowH);
+    ctx.fillStyle='#8a8d9a'; ctx.fillText('group delay (samples)', padL, y3-2);
+    let lo=Infinity, hi=-Infinity;
+    for(const v of gd){ if(v<lo) lo=v; if(v>hi) hi=v; }
+    const rng=Math.max(1e-9, hi-lo);
+    ctx.strokeStyle='#5ce89a'; ctx.lineWidth=1.5; ctx.beginPath();
+    for(let k=0;k<K;k++){
+      const xx=padL+(W-padL-padR)*k/(K-1);
+      const yy=y3+rowH*(1-(gd[k]-lo)/rng);
+      if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+    ctx.fillStyle='#8a8d9a';
+    ctx.fillText(hi.toFixed(1), padL-36, y3+10);
+    ctx.fillText(lo.toFixed(1), padL-36, y3+rowH-2);
+  }
+  [mEl,tEl,fcEl,bwEl,nEl,wEl].forEach(e=>e.addEventListener('input', draw));
+  [mEl,tEl,wEl].forEach(e=>e.addEventListener('change', draw));
+  window.addEventListener('resize', setup);
+  setup();
+})();
+
+// ---- CH 10: allpass chain --------------------------------------
+(function allpassDemo(){
+  const c = document.getElementById('apDemo'); if(!c) return;
+  const nEl=document.getElementById('apN'), nVal=document.getElementById('apNVal');
+  const aEl=document.getElementById('apA'), aVal=document.getElementById('apAVal');
+  const impBtn=document.getElementById('apImpulse');
+  let W=0, H=360, ctx=null;
+  function coefs(){
+    const N=parseInt(nEl.value), a=parseFloat(aEl.value);
+    // Each stage: H(z) = (a + z^-1)/(1 + a z^-1)
+    let b=[a, 1], aP=[1, a];
+    for (let k=1;k<N;k++){
+      const nb=new Array(b.length+1).fill(0), na=new Array(aP.length+1).fill(0);
+      for(let i=0;i<b.length;i++){ nb[i]+=b[i]*a; nb[i+1]+=b[i]*1; }
+      for(let i=0;i<aP.length;i++){ na[i]+=aP[i]*1; na[i+1]+=aP[i]*a; }
+      b=nb; aP=na;
+    }
+    return { b, a:aP };
+  }
+  function setup(){ W=fitWidth(c); ctx=setupCanvas(c,W,H); draw(); }
+  function draw(){
+    if(!ctx) return;
+    nVal.textContent = nEl.value;
+    aVal.textContent = parseFloat(aEl.value).toFixed(2);
+    ctx.fillStyle='#12141c'; ctx.fillRect(0,0,W,H);
+    const { b, a } = coefs();
+    const K=400; const mag=new Float32Array(K); const ph=new Float32Array(K);
+    for(let k=0;k<K;k++){
+      const w=Math.PI*k/(K-1); const Hv=freqz(b,a,w);
+      mag[k]=Math.sqrt(Hv.re*Hv.re+Hv.im*Hv.im);
+      ph[k]=Math.atan2(Hv.im,Hv.re);
+    }
+    for (let k=1;k<K;k++){ let d=ph[k]-ph[k-1]; while(d>Math.PI){ph[k]-=2*Math.PI;d=ph[k]-ph[k-1];} while(d<-Math.PI){ph[k]+=2*Math.PI;d=ph[k]-ph[k-1];} }
+    const rowH=(H-40)/3, padL=50, padR=10;
+    // |H|
+    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(padL, 16, W-padL-padR, rowH);
+    ctx.strokeStyle='#e8a44a'; ctx.lineWidth=1.5; ctx.beginPath();
+    for(let k=0;k<K;k++){
+      const d=20*Math.log10(Math.max(1e-5,mag[k]));
+      const v=Math.max(-12,Math.min(12,d));
+      const xx=padL+(W-padL-padR)*k/(K-1);
+      const yy=16+rowH*(1-(v+12)/24);
+      if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+    ctx.fillStyle='#8a8d9a'; ctx.font="10px 'Lucida Console', monospace";
+    ctx.fillText('|H| (flat = allpass)', padL, 14);
+    // phase
+    const y2=16+rowH+6;
+    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(padL, y2, W-padL-padR, rowH);
+    let lo=Infinity,hi=-Infinity; for(const v of ph){ if(v<lo) lo=v; if(v>hi) hi=v; }
+    const rng=Math.max(1e-9,hi-lo);
+    ctx.strokeStyle='#b06ae8'; ctx.lineWidth=1.5; ctx.beginPath();
+    for(let k=0;k<K;k++){
+      const xx=padL+(W-padL-padR)*k/(K-1);
+      const yy=y2+rowH*(1-(ph[k]-lo)/rng);
+      if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+    ctx.fillStyle='#8a8d9a'; ctx.fillText('phase (rad)', padL, y2-2);
+    // impulse response
+    const y3=16+2*rowH+12;
+    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(padL, y3, W-padL-padR, rowH);
+    const Nir=120;
+    const h=impulseResponse(b,a,Nir);
+    let hM=1e-9; for(const v of h) if(Math.abs(v)>hM) hM=Math.abs(v);
+    const midY=y3+rowH/2;
+    ctx.strokeStyle='#2a2d3a'; ctx.beginPath(); ctx.moveTo(padL,midY); ctx.lineTo(W-padR,midY); ctx.stroke();
+    ctx.strokeStyle='#4a9de8'; ctx.lineWidth=1;
+    for(let n=0;n<Nir;n++){
+      const xx=padL+(W-padL-padR)*n/(Nir-1);
+      const yy=midY - h[n]/hM*(rowH/2-3);
+      ctx.beginPath(); ctx.moveTo(xx,midY); ctx.lineTo(xx,yy); ctx.stroke();
+    }
+    ctx.fillStyle='#8a8d9a'; ctx.fillText('impulse response', padL, y3-2);
+  }
+  nEl.addEventListener('input', draw);
+  aEl.addEventListener('input', draw);
+  impBtn.addEventListener('click', draw);
+  window.addEventListener('resize', setup);
+  setup();
+})();
+
+// ---- CH 11: audible EQ on a drum loop --------------------------
+(function eqDemo(){
+  const c = document.getElementById('eqViz'); if(!c) return;
+  const loEl=document.getElementById('eqLo'), loVal=document.getElementById('eqLoVal');
+  const mdEl=document.getElementById('eqMd'), mdVal=document.getElementById('eqMdVal');
+  const hiEl=document.getElementById('eqHi'), hiVal=document.getElementById('eqHiVal');
+  const qEl=document.getElementById('eqQ'), qVal=document.getElementById('eqQVal');
+  const btnO=document.getElementById('eqPlayOrig'), btnE=document.getElementById('eqPlayEQ');
+  const SR = 22050;
+  let W=0, H=320, ctx=null;
+  let drum = null;
+  function buildDrum(){
+    const N = SR*2; // 2 seconds
+    const out = new Float32Array(N);
+    // pattern: kick on beats 1 and 3 of a 4/4 at 120 BPM -> half-second beats, 0.5s per beat -> in 2s: 4 beats
+    const bpm = 120; const beat = 60/bpm; // 0.5s
+    const kickT = [0, 2*beat]; // kick at beats 1 and 3
+    const snareT = [beat, 3*beat]; // snare at 2 and 4
+    const hatT = []; for(let i=0;i<8;i++) hatT.push(i*beat/2); // 8 hats per bar
+    for (const t of kickT){
+      const i0 = Math.floor(t*SR);
+      for (let k=0;k<Math.floor(0.25*SR);k++){
+        const tt = k/SR;
+        const f = 80*Math.exp(-tt*14) + 40;
+        const env = Math.exp(-tt*8);
+        if (i0+k<N) out[i0+k] += 0.8*env*Math.sin(2*Math.PI*f*tt);
+      }
+    }
+    for (const t of snareT){
+      const i0 = Math.floor(t*SR);
+      for (let k=0;k<Math.floor(0.12*SR);k++){
+        const tt = k/SR;
+        const env = Math.exp(-tt*18);
+        const noise = Math.random()*2-1;
+        const body = Math.sin(2*Math.PI*220*tt);
+        if (i0+k<N) out[i0+k] += 0.4*env*(0.7*noise + 0.3*body);
+      }
+    }
+    for (const t of hatT){
+      const i0 = Math.floor(t*SR);
+      for (let k=0;k<Math.floor(0.05*SR);k++){
+        const tt = k/SR;
+        const env = Math.exp(-tt*40);
+        const noise = Math.random()*2-1;
+        if (i0+k<N) out[i0+k] += 0.15*env*noise;
+      }
+    }
+    // normalise
+    let m=1e-9; for (const v of out) if (Math.abs(v)>m) m=Math.abs(v);
+    for (let i=0;i<N;i++) out[i]/=m*1.1;
+    return out;
+  }
+  drum = buildDrum();
+  function rbjPeaking(f0, Q, dB, sr){
+    const w0 = 2*Math.PI*f0/sr;
+    const A = Math.pow(10, dB/40);
+    const alpha = Math.sin(w0)/(2*Q);
+    const cw = Math.cos(w0);
+    const b0 = 1 + alpha*A;
+    const b1 = -2*cw;
+    const b2 = 1 - alpha*A;
+    const a0 = 1 + alpha/A;
+    const a1 = -2*cw;
+    const a2 = 1 - alpha/A;
+    return { b:[b0/a0, b1/a0, b2/a0], a:[1, a1/a0, a2/a0] };
+  }
+  function cascadeCoeffs(){
+    const Q = parseFloat(qEl.value);
+    const s1 = rbjPeaking(100, Q, parseFloat(loEl.value), SR);
+    const s2 = rbjPeaking(1000, Q, parseFloat(mdEl.value), SR);
+    const s3 = rbjPeaking(6000, Q, parseFloat(hiEl.value), SR);
+    return [s1, s2, s3];
+  }
+  function eqProcess(x){
+    let y = x;
+    for (const s of cascadeCoeffs()) y = filterSig(s.b, s.a, y);
+    return y;
+  }
+  function setup(){ W=fitWidth(c); ctx=setupCanvas(c,W,H); draw(); }
+  function draw(){
+    if(!ctx) return;
+    loVal.textContent = parseFloat(loEl.value).toFixed(1)+' dB';
+    mdVal.textContent = parseFloat(mdEl.value).toFixed(1)+' dB';
+    hiVal.textContent = parseFloat(hiEl.value).toFixed(1)+' dB';
+    qVal.textContent = parseFloat(qEl.value).toFixed(2);
+    ctx.fillStyle='#12141c'; ctx.fillRect(0,0,W,H);
+    // Composite EQ curve, log-frequency
+    const padL=50, padR=10, padT=14;
+    const topH=H/2-8, botH=H/2-8;
+    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(padL, padT, W-padL-padR, topH);
+    const fMin=30, fMax=SR/2;
+    const K=400;
+    const stages=cascadeCoeffs();
+    ctx.strokeStyle='#e8a44a'; ctx.lineWidth=1.5; ctx.beginPath();
+    for (let k=0;k<K;k++){
+      const f = fMin*Math.pow(fMax/fMin, k/(K-1));
+      const w = 2*Math.PI*f/SR;
+      let mag=1;
+      for (const s of stages){
+        const Hv = freqz(s.b, s.a, w);
+        mag *= Math.sqrt(Hv.re*Hv.re + Hv.im*Hv.im);
+      }
+      const d = 20*Math.log10(Math.max(1e-5, mag));
+      const v = Math.max(-24, Math.min(24, d));
+      const xx = padL+(W-padL-padR)*k/(K-1);
+      const yy = padT + topH*(1 - (v+24)/48);
+      if (k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+    // zero line
+    ctx.strokeStyle='#2a2d3a'; ctx.beginPath();
+    ctx.moveTo(padL, padT+topH/2); ctx.lineTo(W-padR, padT+topH/2); ctx.stroke();
+    ctx.fillStyle='#8a8d9a'; ctx.font="10px 'Lucida Console', monospace";
+    ctx.fillText('EQ curve (dB) : 30 Hz - Nyquist, log-f', padL, padT-2);
+    ctx.fillText('+24', padL-28, padT+10);
+    ctx.fillText(' 0', padL-20, padT+topH/2+4);
+    ctx.fillText('-24', padL-28, padT+topH-2);
+    // freq labels
+    [100,1000,6000].forEach(f=>{
+      const xx = padL + (W-padL-padR)*Math.log(f/fMin)/Math.log(fMax/fMin);
+      ctx.strokeStyle='#2a2d3a';
+      ctx.beginPath(); ctx.moveTo(xx, padT); ctx.lineTo(xx, padT+topH); ctx.stroke();
+      ctx.fillStyle='#8a8d9a';
+      const lbl = f>=1000 ? (f/1000)+'k' : f;
+      ctx.fillText(lbl, xx-8, padT+topH+10);
+    });
+    // Bottom: waveforms
+    const y2 = padT+topH+22;
+    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(padL, y2, W-padL-padR, botH-10);
+    // 0.5s segment
+    const seg = Math.min(drum.length, SR);
+    const eqSeg = eqProcess(drum.subarray(0, seg));
+    const midY = y2 + (botH-10)/2;
+    ctx.strokeStyle='#2a2d3a'; ctx.beginPath(); ctx.moveTo(padL,midY); ctx.lineTo(W-padR,midY); ctx.stroke();
+    // original grey
+    let m1=1e-9; for (let i=0;i<seg;i++) if(Math.abs(drum[i])>m1) m1=Math.abs(drum[i]);
+    let m2=1e-9; for (let i=0;i<seg;i++) if(Math.abs(eqSeg[i])>m2) m2=Math.abs(eqSeg[i]);
+    const mm = Math.max(m1, m2);
+    ctx.strokeStyle='#4a5063'; ctx.lineWidth=1; ctx.beginPath();
+    for (let i=0;i<seg;i+=4){
+      const xx=padL+(W-padL-padR)*i/(seg-1);
+      const yy=midY - drum[i]/mm*((botH-10)/2-3);
+      if (i===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+    ctx.strokeStyle='#e8a44a'; ctx.lineWidth=1; ctx.beginPath();
+    for (let i=0;i<seg;i+=4){
+      const xx=padL+(W-padL-padR)*i/(seg-1);
+      const yy=midY - eqSeg[i]/mm*((botH-10)/2-3);
+      if (i===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+    ctx.fillStyle='#8a8d9a'; ctx.fillText('drum loop: original (grey) vs EQ\'d (orange) - 1 s segment', padL, y2-2);
+  }
+  [loEl,mdEl,hiEl,qEl].forEach(e=>e.addEventListener('input', draw));
+  btnO.addEventListener('click', ()=> playBuffer(drum, SR));
+  btnE.addEventListener('click', ()=> playBuffer(eqProcess(drum), SR));
+  window.addEventListener('resize', setup);
+  setup();
+})();
+
+// ---- TOC active-link tracking ----------------------------------
+(function tocActive(){
+  const links = document.querySelectorAll('nav#toc a');
+  const sections = Array.from(links).map(a => document.querySelector(a.getAttribute('href')));
+  function update(){
+    const y = window.scrollY + 100;
+    let idx = 0;
+    for (let i=0;i<sections.length;i++){
+      if (sections[i] && sections[i].offsetTop <= y) idx = i;
+    }
+    links.forEach((a,i)=> a.classList.toggle('active', i===idx));
+  }
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+})();
+
+})();
+</script>
+</body>
+</html>
