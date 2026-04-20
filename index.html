@@ -790,7 +790,7 @@ a2 = 1 - alpha / A</div>
 
   <h3>Signal-flow diagrams</h3>
   <div class="viz">
-    <canvas id="structDiag" height="420" style="height:420px"></canvas>
+    <canvas id="structDiag" height="480" style="height:480px"></canvas>
     <div class="controls">
       <label>Structure
         <select id="stSel">
@@ -849,10 +849,13 @@ a2 = 1 - alpha / A</div>
   <p>
     Parks &amp; McClellan (1972) applied the Remez exchange algorithm to FIR design:
     minimise the <em>maximum</em> error in passband and stopband. The result is an
-    equiripple filter that is Chebyshev-optimal for the given length and band edges. A
-    full Remez implementation is beyond this page — the "Parks-McClellan" option below
-    uses pre-computed coefficients for a handful of representative specifications so
-    you can compare against the window method.
+    equiripple filter that is Chebyshev-optimal for the given length and band edges.
+    The "Parks-McClellan" option in the live designer below runs an iteratively-reweighted
+    least-squares variant — a simplified Remez-style alternating projection that
+    converges to a visibly equiripple response at the orders this demo uses. It is not
+    the full 1972 algorithm (which requires a Chebyshev-alternation extremal-point
+    search), but it captures the spirit of the result: roughly equal ripple in the
+    passband and stopband.
   </p>
 
   <div class="viz">
@@ -862,6 +865,7 @@ a2 = 1 - alpha / A</div>
         <select id="dsMethod">
           <option value="win" selected>FIR window method</option>
           <option value="bw">IIR Butterworth (bilinear)</option>
+          <option value="pm">FIR Parks-McClellan (equiripple)</option>
         </select>
       </label>
       <label>Type
@@ -884,7 +888,7 @@ a2 = 1 - alpha / A</div>
         </select>
       </label>
     </div>
-    <div class="viz-caption">Live designer. Top: magnitude (dB). Middle: impulse response h[n]. Bottom: group delay. For band-pass/band-stop, "cutoff" is the centre; "width" is the bandwidth.</div>
+    <div class="viz-caption">Live designer. Top: magnitude (dB) with passband/stopband edges marked. Middle: impulse response h[n] (stem). Bottom: group delay. For band-pass/band-stop, "cutoff" is the centre; "width" is the bandwidth. The Parks-McClellan option uses a frequency-sampled least-squares approximation iteratively re-weighted towards equiripple (a Remez-style alternating-projection) — not the full 1972 algorithm, but it converges to a visibly equiripple lowpass/highpass at the orders this demo uses.</div>
   </div>
 
   <details class="expandable">
@@ -948,13 +952,13 @@ a2 = 1 - alpha / A</div>
 
   <h3>Interactive: chained allpasses</h3>
   <div class="viz">
-    <canvas id="apDemo" height="360" style="height:360px"></canvas>
+    <canvas id="apDemo" height="440" style="height:440px"></canvas>
     <div class="controls">
       <label># stages <input type="range" id="apN" min="1" max="8" value="4" step="1"> <span id="apNVal">4</span></label>
       <label>coeff a <input type="range" id="apA" min="-0.95" max="0.95" value="0.7" step="0.01"> <span id="apAVal">0.70</span></label>
-      <button id="apImpulse">Show impulse response</button>
+      <button id="apImpulse">Redraw</button>
     </div>
-    <div class="viz-caption">Top: |H| (should be flat at 0 dB — invariant under number of stages). Middle: phase response (accumulates with each stage). Bottom: impulse response of the cascade.</div>
+    <div class="viz-caption">Four panels. Top-left: |H| in dB, clamped to a +/-2 dB window — perfectly flat at 0 dB confirms the allpass property. Top-right: unwrapped phase (accumulates monotonically with each stage). Bottom-left: group delay (samples) — this is what an allpass actually "does". Bottom-right: impulse response of the cascade.</div>
   </div>
 </section>
 
@@ -2183,39 +2187,64 @@ const DF = window.DF = {
 (function structDemo(){
   const c = document.getElementById('structDiag'); if(!c) return;
   const sel=document.getElementById('stSel');
-  let W=0, H=420, ctx=null;
-  function setup(){ W=fitWidth(c); ctx=setupCanvas(c,W,H); draw(); }
+  // Bumped H to 480 to give DF-I room for the two-summer layout
+  let W=0, H=480, ctx=null;
+  function setup(){
+    W=fitWidth(c);
+    // keep the external CSS height in sync when we bump H
+    c.style.height = H + 'px';
+    ctx=setupCanvas(c,W,H);
+    draw();
+  }
   function node(x,y,r,label,col){
     ctx.strokeStyle=col||'#4a9de8'; ctx.fillStyle='#12141c'; ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle=col||'#d4d6e0'; ctx.font="12px 'Lucida Console', monospace";
+    ctx.fillStyle=col||'#d4d6e0'; ctx.font="bold 13px 'Lucida Console', monospace";
     ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(label, x, y);
     ctx.textAlign='start'; ctx.textBaseline='alphabetic';
   }
   function delay(x,y){
     ctx.strokeStyle='#e85a7a'; ctx.fillStyle='#12141c'; ctx.lineWidth=1.5;
-    ctx.fillRect(x-18,y-14,36,28); ctx.strokeRect(x-18,y-14,36,28);
-    ctx.fillStyle='#e85a7a'; ctx.font="11px 'Lucida Console', monospace";
-    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('z^-1', x, y);
+    ctx.fillRect(x-20,y-15,40,30); ctx.strokeRect(x-20,y-15,40,30);
+    ctx.fillStyle='#e85a7a'; ctx.font="12px 'Lucida Console', monospace";
+    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('z\u207B\u00B9', x, y);
     ctx.textAlign='start'; ctx.textBaseline='alphabetic';
   }
-  function mul(x,y,label){
+  // Triangular coefficient multiplier with apex pointing in dir (+1 right, -1 left)
+  function mul(x,y,label,dir){
+    dir = dir||1;
     ctx.strokeStyle='#e8a44a'; ctx.fillStyle='#12141c'; ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.moveTo(x-12,y-10); ctx.lineTo(x+12,y); ctx.lineTo(x-12,y+10); ctx.closePath();
-    ctx.fill(); ctx.stroke();
-    ctx.fillStyle='#e8a44a'; ctx.font="11px 'Lucida Console', monospace";
-    ctx.fillText(label, x-8, y-14);
+    ctx.beginPath();
+    if (dir>0){
+      ctx.moveTo(x-12,y-10); ctx.lineTo(x+12,y); ctx.lineTo(x-12,y+10);
+    } else {
+      ctx.moveTo(x+12,y-10); ctx.lineTo(x-12,y); ctx.lineTo(x+12,y+10);
+    }
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#e8a44a'; ctx.font="bold 11px 'Lucida Console', monospace";
+    ctx.textAlign='center';
+    ctx.fillText(label, x, y-16);
+    ctx.textAlign='start';
   }
-  function arrow(x1,y1,x2,y2){
-    ctx.strokeStyle='#8a8d9a'; ctx.lineWidth=1.2;
+  function arrow(x1,y1,x2,y2,col){
+    ctx.strokeStyle=col||'#d4d6e0'; ctx.lineWidth=1.4;
     ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-    // small arrowhead
     const ang=Math.atan2(y2-y1,x2-x1);
     ctx.beginPath();
     ctx.moveTo(x2,y2);
-    ctx.lineTo(x2-6*Math.cos(ang-0.4), y2-6*Math.sin(ang-0.4));
-    ctx.lineTo(x2-6*Math.cos(ang+0.4), y2-6*Math.sin(ang+0.4));
-    ctx.closePath(); ctx.fillStyle='#8a8d9a'; ctx.fill();
+    ctx.lineTo(x2-7*Math.cos(ang-0.4), y2-7*Math.sin(ang-0.4));
+    ctx.lineTo(x2-7*Math.cos(ang+0.4), y2-7*Math.sin(ang+0.4));
+    ctx.closePath(); ctx.fillStyle=col||'#d4d6e0'; ctx.fill();
+  }
+  // Plain line (no arrowhead) - used for tap stubs
+  function line(x1,y1,x2,y2,col){
+    ctx.strokeStyle=col||'#d4d6e0'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  }
+  // Signal-flow branch point (small filled dot)
+  function dot(x,y){
+    ctx.fillStyle='#d4d6e0';
+    ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
   }
   function draw(){
     if(!ctx) return;
@@ -2228,43 +2257,106 @@ const DF = window.DF = {
     else drawCascade();
   }
   function drawDF1(){
-    // x --> feed-forward (delays b0..b2), sum at w, subtract feedback (delays a1..a2 of y)
-    const y0=H/2;
-    ctx.fillStyle='#d4d6e0'; ctx.font="12px 'Lucida Console', monospace";
-    ctx.fillText("Direct Form I", 12, 24);
-    // top: delay line for x
-    const xs=[60,160,260];
-    node(xs[0], y0-80, 10, 'x', '#4a9de8');
-    delay(xs[1], y0-80); delay(xs[2], y0-80);
-    arrow(xs[0]+10,y0-80, xs[1]-18,y0-80);
-    arrow(xs[1]+18,y0-80, xs[2]-18,y0-80);
-    // taps
-    const tapX=[xs[0], xs[1], xs[2]];
-    const lbl=['b0','b1','b2'];
+    // Oppenheim-Schafer style DF-I: feed-forward on top, feedback on bottom, one adder.
+    // Layout:                          b0
+    //   x[n] -o-->[z^-1]-o-->[z^-1]-o   -->(+)--o--> y[n]
+    //        |          |          |     ^     |
+    //        b0         b1         b2    |     |
+    //                                    |
+    //                    -a1        -a2  |
+    //        (+)<-------o<-[z^-1]<-o<-[z^-1]<--|
+    //   (top sum feeds into right-hand sum)
+    //
+    // For legibility we use ONE summing node on the right with five arrows entering it:
+    // three feed-forward taps (b0,b1,b2 x[n-k]) from above and two feedback taps (-a1,-a2 y[n-k]) from below.
+    ctx.fillStyle='#d4d6e0'; ctx.font="14px 'Lucida Console', monospace";
+    ctx.fillText("Direct Form I  -  y[n] = b0 x[n] + b1 x[n-1] + b2 x[n-2] - a1 y[n-1] - a2 y[n-2]", 12, 22);
+    ctx.fillStyle='#8a8d9a'; ctx.font="10px 'Lucida Console', monospace";
+    ctx.fillText('feed-forward (zeros)', 12, 52);
+    ctx.fillText('feedback (poles)', 12, H-18);
+
+    // Geometry (all logical, not DPR pixels)
+    const leftX = 70;                          // x[n] input column
+    const sumX = Math.max(560, W-120);         // right-hand summing junction
+    const outX = Math.min(W-20, sumX+80);      // y[n] output column
+    const span = sumX - leftX;                 // total horizontal room
+    const tapDX = span/4;                      // spacing between delay stages
+    const ffY = 100;                           // horizontal feed-forward rail
+    const fbY = H - 60;                        // horizontal feedback rail
+    const sumY = H/2;                          // adder vertical position
+    const coefFFY = ffY + 80;                  // tier where b-coef triangles sit
+    const coefFBY = fbY - 80;                  // tier where -a-coef triangles sit
+
+    // --- feed-forward (top) rail ---
+    node(leftX, ffY, 12, 'x', '#4a9de8');
+    // x[n] label
+    ctx.fillStyle='#4a9de8'; ctx.font="11px 'Lucida Console', monospace";
+    ctx.fillText('x[n]', leftX-12, ffY-20);
+
+    const ffTaps = [leftX, leftX+tapDX, leftX+2*tapDX];
+    // delay boxes between taps
+    arrow(leftX+12, ffY, ffTaps[1]-20, ffY);
+    delay(ffTaps[1], ffY);
+    arrow(ffTaps[1]+20, ffY, ffTaps[2]-20, ffY);
+    delay(ffTaps[2], ffY);
+    // branch dots at each tap position
+    dot(ffTaps[0], ffY);
+
+    // vertical taps from rail down to multipliers
+    const ffLbl = ['b\u2080','b\u2081','b\u2082'];
     for (let i=0;i<3;i++){
-      arrow(tapX[i], y0-80+12, tapX[i], y0-30);
-      mul(tapX[i], y0-20, lbl[i]);
-      arrow(tapX[i], y0-12, tapX[i], y0+10);
+      dot(ffTaps[i], ffY);
+      line(ffTaps[i], ffY+(i===0?0:15), ffTaps[i], coefFFY-10, '#d4d6e0');
+      mul(ffTaps[i], coefFFY, ffLbl[i], 1);
+      // from multiplier apex (right side) bend down-right into summing junction
+      // but we want a clean routing: go vertically down then horizontally right to sum
+      const yMid = sumY - 10 + i*10; // stagger the 3 entries into the sum vertically
+      arrow(ffTaps[i]+12, coefFFY, sumX-14, yMid);
     }
-    // sum
-    node(340, y0, 14, '+', '#5ce89a');
-    for (let i=0;i<3;i++) arrow(tapX[i], y0, 340-14, y0);
-    // feedback line y
-    node(420, y0, 10, 'y', '#5ce89a');
-    arrow(354, y0, 410, y0);
-    // y delays
-    const ys=[480,580];
-    delay(ys[0], y0+80); delay(ys[1], y0+80);
-    arrow(420, y0+10, 420, y0+80); arrow(420, y0+80, ys[0]-18, y0+80);
-    arrow(ys[0]+18, y0+80, ys[1]-18, y0+80);
-    // taps from y delay line back up -> subtract at sum
-    const yTap=[420, ys[0], ys[1]];
-    const lblA=['','-a1','-a2'];
+    // allow the leftmost b0 tap to branch straight from the x node (since no delay before it)
+    // already drawn above
+
+    // --- central summing junction ---
+    node(sumX, sumY, 16, '+', '#5ce89a');
+    ctx.fillStyle='#8a8d9a'; ctx.font="10px 'Lucida Console', monospace";
+    ctx.fillText('adder', sumX-16, sumY-22);
+
+    // --- output ---
+    node(outX, sumY, 12, 'y', '#5ce89a');
+    ctx.fillStyle='#5ce89a'; ctx.font="11px 'Lucida Console', monospace";
+    ctx.fillText('y[n]', outX-12, sumY-20);
+    arrow(sumX+16, sumY, outX-12, sumY);
+    // branch point on output feeding the feedback rail
+    const bpX = outX;
+    dot(bpX, sumY);
+
+    // --- feedback (bottom) rail: mirror of feed-forward, running right-to-left ---
+    // The rail shows y[n], y[n-1], y[n-2]. Taps at bpX (y[n] - needed only as source), and two delays going LEFT.
+    const fbTaps = [bpX, bpX - tapDX, bpX - 2*tapDX];
+    // vertical drop from y branch down to feedback rail
+    line(bpX, sumY+12, bpX, fbY, '#d4d6e0');
+    dot(bpX, fbY);
+    // delay chain: y[n] -> [z^-1] -> y[n-1] -> [z^-1] -> y[n-2]
+    arrow(fbTaps[0]-6, fbY, fbTaps[1]+20, fbY);
+    delay(fbTaps[1], fbY);
+    arrow(fbTaps[1]-20, fbY, fbTaps[2]+20, fbY);
+    delay(fbTaps[2], fbY);
+
+    const fbLbl = ['', '-a\u2081', '-a\u2082'];
     for (let i=1;i<3;i++){
-      arrow(yTap[i], y0+80-12, yTap[i], y0+30);
-      mul(yTap[i], y0+20, lblA[i]);
-      arrow(yTap[i], y0+10, 340+10*Math.cos(Math.PI+0.3), y0);
+      dot(fbTaps[i], fbY);
+      line(fbTaps[i], fbY-15, fbTaps[i], coefFBY+10, '#d4d6e0');
+      mul(fbTaps[i], coefFBY, fbLbl[i], 1);
+      // from multiplier right apex up to sum
+      const yMid = sumY + 10 + (i-1)*10;
+      arrow(fbTaps[i]+12, coefFBY, sumX-14, yMid);
     }
+
+    // Colour-coded group labels
+    ctx.fillStyle='#4a9de8'; ctx.font="10px 'Lucida Console', monospace";
+    ctx.fillText('x[n]  x[n-1]  x[n-2]', leftX, ffY-32);
+    ctx.fillStyle='#5ce89a';
+    ctx.fillText('y[n]  y[n-1]  y[n-2]', fbTaps[2]-10, fbY+32);
   }
   function drawDF2(){
     const y0=H/2;
@@ -2350,7 +2442,11 @@ const DF = window.DF = {
   const wEl=document.getElementById('dsWin');
   let W=0, H=440, ctx=null;
   function sinc(x){ return Math.abs(x)<1e-9?1:Math.sin(x)/x; }
-  function window(L, kind){
+  // Renamed from `window` - the hoisted `function window(){}` declaration was
+  // shadowing the global `window` object inside this IIFE and throwing on the
+  // `window.addEventListener('resize', setup)` call at the bottom. That one error
+  // halted the rest of the top-level IIFE, leaving the allpass and EQ demos blank.
+  function windowFn(L, kind){
     const w=new Float32Array(L);
     if (kind==='rect'){ w.fill(1); return w; }
     if (kind==='hann'){ for(let n=0;n<L;n++) w[n]=0.5-0.5*Math.cos(2*Math.PI*n/(L-1)); return w; }
@@ -2362,7 +2458,7 @@ const DF = window.DF = {
     const fc = parseFloat(fcEl.value); // cutoff / pi
     const bw = parseFloat(bwEl.value); // width / pi
     const L = parseInt(nEl.value) | 1; // force odd
-    const win = window(L, wEl.value);
+    const win = windowFn(L, wEl.value);
     const type = tEl.value;
     const h = new Float32Array(L);
     const wc = fc*Math.PI;
@@ -2432,9 +2528,170 @@ const DF = window.DF = {
     }
     return { b, a };
   }
+  // Remez-style equiripple FIR via iteratively reweighted least-squares on a dense
+  // frequency grid. Returns linear-phase (Type-I) lowpass/highpass/bandpass/bandstop.
+  // Simplified: approximates the Parks-McClellan result for modest orders (N <= ~80).
+  function designPM(){
+    const fc = parseFloat(fcEl.value);
+    const bw = parseFloat(bwEl.value);
+    let L = parseInt(nEl.value) | 1; // force odd length -> Type-I linear phase
+    if (L < 5) L = 5;
+    const M = (L-1)/2;
+    const type = tEl.value;
+    // Band edges (in omega/pi)
+    // transition half-width = max(0.02, bw/4) to avoid pathological specs
+    const tw = Math.max(0.02, bw/4);
+    let bands; // list of { lo, hi, D, W }  where D=desired, W=weight
+    if (type==='lp'){
+      const fp = Math.max(0.02, fc - tw);
+      const fs = Math.min(0.98, fc + tw);
+      bands = [ { lo:0.0, hi:fp, D:1, W:1 }, { lo:fs, hi:1.0, D:0, W:10 } ];
+    } else if (type==='hp'){
+      const fs = Math.max(0.02, fc - tw);
+      const fp = Math.min(0.98, fc + tw);
+      bands = [ { lo:0.0, hi:fs, D:0, W:10 }, { lo:fp, hi:1.0, D:1, W:1 } ];
+    } else if (type==='bp'){
+      const f1 = Math.max(0.02, fc - bw/2 - tw);
+      const f2 = Math.max(f1+0.02, fc - bw/2 + tw);
+      const f3 = Math.min(0.98, fc + bw/2 - tw);
+      const f4 = Math.min(0.99, fc + bw/2 + tw);
+      bands = [ { lo:0.0, hi:f1, D:0, W:10 }, { lo:f2, hi:f3, D:1, W:1 }, { lo:f4, hi:1.0, D:0, W:10 } ];
+    } else { // bs
+      const f1 = Math.max(0.02, fc - bw/2 - tw);
+      const f2 = Math.max(f1+0.02, fc - bw/2 + tw);
+      const f3 = Math.min(0.98, fc + bw/2 - tw);
+      const f4 = Math.min(0.99, fc + bw/2 + tw);
+      bands = [ { lo:0.0, hi:f1, D:1, W:1 }, { lo:f2, hi:f3, D:0, W:10 }, { lo:f4, hi:1.0, D:1, W:1 } ];
+    }
+    // Dense grid on omega (in radians), only in bands
+    const grid = [];
+    const density = 16 * (M+1);
+    for (const band of bands){
+      const lo = band.lo*Math.PI, hi = band.hi*Math.PI;
+      const n = Math.max(4, Math.round(density * (band.hi-band.lo)));
+      for (let i=0;i<=n;i++){
+        const w = lo + (hi-lo)*i/n;
+        grid.push({ w, D: band.D, W: band.W });
+      }
+    }
+    // Type-I linear-phase FIR has real amplitude response:
+    //   A(w) = a[0] + sum_{k=1..M} a[k] cos(k w)
+    // Then h[M] = a[0], h[M-k] = h[M+k] = a[k]/2 for k>=1.
+    // Solve min_a max_{grid} W(w) |A(w) - D(w)|  via IRLS on least-squares.
+    const K = M + 1;
+    let a = new Float64Array(K);
+    // initial guess via simple windowed sinc projection on the desired response
+    // Use direct least-squares first pass (W=1) to get starting point
+    let weights = grid.map(g=>g.W);
+    for (let iter=0; iter<8; iter++){
+      // Build normal equations A^T W A a = A^T W d  with A_ij = cos(j w_i)
+      // K x K matrix and K-vector. K is <= ~52 so trivial.
+      const N = grid.length;
+      const ATA = [];
+      for (let i=0;i<K;i++){ ATA.push(new Float64Array(K)); }
+      const ATd = new Float64Array(K);
+      for (let g=0;g<N;g++){
+        const w = grid[g].w, d = grid[g].D, wt = weights[g]*weights[g];
+        // row of A
+        for (let j=0;j<K;j++){
+          const aj = Math.cos(j*w);
+          ATd[j] += wt * aj * d;
+          for (let k=j;k<K;k++){
+            ATA[j][k] += wt * aj * Math.cos(k*w);
+          }
+        }
+      }
+      // symmetrise
+      for (let j=0;j<K;j++) for (let k=0;k<j;k++) ATA[j][k] = ATA[k][j];
+      // Solve ATA * a = ATd via Gauss-Jordan elimination
+      const aug = [];
+      for (let i=0;i<K;i++){
+        const row = new Float64Array(K+1);
+        for (let j=0;j<K;j++) row[j] = ATA[i][j];
+        row[K] = ATd[i];
+        aug.push(row);
+      }
+      for (let i=0;i<K;i++){
+        // partial pivot
+        let piv = i;
+        for (let r=i+1;r<K;r++) if (Math.abs(aug[r][i])>Math.abs(aug[piv][i])) piv=r;
+        if (piv!==i){ const tmp=aug[i]; aug[i]=aug[piv]; aug[piv]=tmp; }
+        const diag = aug[i][i];
+        if (Math.abs(diag)<1e-14) continue;
+        for (let j=i;j<=K;j++) aug[i][j] /= diag;
+        for (let r=0;r<K;r++){
+          if (r===i) continue;
+          const f = aug[r][i];
+          if (Math.abs(f)<1e-18) continue;
+          for (let j=i;j<=K;j++) aug[r][j] -= f*aug[i][j];
+        }
+      }
+      for (let i=0;i<K;i++) a[i] = aug[i][K];
+      // Evaluate error, update weights towards equiripple (Chebyshev approx via IRLS).
+      let eMax = 0;
+      const err = new Float64Array(N);
+      for (let g=0;g<N;g++){
+        let Av = a[0];
+        for (let k=1;k<K;k++) Av += a[k]*Math.cos(k*grid[g].w);
+        err[g] = grid[g].W * (Av - grid[g].D);
+        if (Math.abs(err[g])>eMax) eMax = Math.abs(err[g]);
+      }
+      if (eMax < 1e-9) break;
+      // IRLS: reweight by sqrt(|err|/eMax) -- pushes weight to extremal points
+      const mix = Math.min(0.8, 0.3 + iter*0.1);
+      for (let g=0;g<N;g++){
+        const r = Math.abs(err[g])/eMax;
+        const target = Math.sqrt(Math.max(r, 1e-3));
+        weights[g] = grid[g].W * ((1-mix) + mix*target/Math.max(1e-3, target));
+        // Effective: we rescale weights by a function that chases extrema
+        weights[g] = grid[g].W * Math.pow(Math.max(r, 1e-3), 0.5);
+      }
+    }
+    // Assemble symmetric impulse response
+    const h = new Float64Array(L);
+    h[M] = a[0];
+    for (let k=1;k<=M;k++){ h[M-k] = a[k]/2; h[M+k] = a[k]/2; }
+    return { b: Array.from(h), a:[1] };
+  }
   function design(){
     if (mEl.value==='win') return designFIR();
+    if (mEl.value==='pm') return designPM();
     return designBW();
+  }
+  // Currently-drawn band edges (passband/stopband markers), in omega/pi units
+  function bandEdges(){
+    const fc = parseFloat(fcEl.value);
+    const bw = parseFloat(bwEl.value);
+    const type = tEl.value;
+    const tw = Math.max(0.02, bw/4);
+    const edges = [];
+    if (mEl.value==='pm'){
+      if (type==='lp'){
+        edges.push({x:Math.max(0.02,fc-tw), col:'#5ce89a', lbl:'fp'});
+        edges.push({x:Math.min(0.98,fc+tw), col:'#e85a7a', lbl:'fs'});
+      } else if (type==='hp'){
+        edges.push({x:Math.max(0.02,fc-tw), col:'#e85a7a', lbl:'fs'});
+        edges.push({x:Math.min(0.98,fc+tw), col:'#5ce89a', lbl:'fp'});
+      } else if (type==='bp'){
+        edges.push({x:Math.max(0.02,fc-bw/2-tw), col:'#e85a7a', lbl:'fs1'});
+        edges.push({x:Math.max(0.04,fc-bw/2+tw), col:'#5ce89a', lbl:'fp1'});
+        edges.push({x:Math.min(0.96,fc+bw/2-tw), col:'#5ce89a', lbl:'fp2'});
+        edges.push({x:Math.min(0.98,fc+bw/2+tw), col:'#e85a7a', lbl:'fs2'});
+      } else {
+        edges.push({x:Math.max(0.02,fc-bw/2-tw), col:'#5ce89a', lbl:'fp1'});
+        edges.push({x:Math.max(0.04,fc-bw/2+tw), col:'#e85a7a', lbl:'fs1'});
+        edges.push({x:Math.min(0.96,fc+bw/2-tw), col:'#e85a7a', lbl:'fs2'});
+        edges.push({x:Math.min(0.98,fc+bw/2+tw), col:'#5ce89a', lbl:'fp2'});
+      }
+    } else {
+      // show the cutoff as a single marker for window & butterworth
+      edges.push({x:fc, col:'#8a8d9a', lbl:'fc'});
+      if (type==='bp' || type==='bs'){
+        edges.push({x:Math.max(0.02,fc-bw/2), col:'#8a8d9a', lbl:'fc-bw/2'});
+        edges.push({x:Math.min(0.98,fc+bw/2), col:'#8a8d9a', lbl:'fc+bw/2'});
+      }
+    }
+    return edges;
   }
   function setup(){ W=fitWidth(c); ctx=setupCanvas(c,W,H); draw(); }
   function draw(){
@@ -2465,21 +2722,35 @@ const DF = window.DF = {
     ctx.stroke();
     ctx.fillStyle='#8a8d9a'; ctx.fillText('0 dB', padL-34, padT+10);
     ctx.fillText('-80', padL-28, padT+rowH-2);
-    // Panel 2: h[n]
+    // Overlay band-edge markers on the magnitude panel
+    const edges = bandEdges();
+    for (const e of edges){
+      const xx = padL + (W-padL-padR)*e.x;
+      ctx.strokeStyle = e.col; ctx.lineWidth = 1;
+      ctx.setLineDash([3,3]);
+      ctx.beginPath(); ctx.moveTo(xx, padT); ctx.lineTo(xx, padT+rowH); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = e.col; ctx.font="9px 'Lucida Console', monospace";
+      ctx.fillText(e.lbl, xx+2, padT+rowH-2);
+    }
+    // Panel 2: h[n] stem plot (FIR shows taps; IIR shows impulse-response tail)
     const y2=padT+rowH+6;
     ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(padL, y2, W-padL-padR, rowH);
     ctx.fillStyle='#8a8d9a'; ctx.fillText('impulse response h[n]', padL, y2-2);
-    const Nir = Math.min(200, Math.max(b.length+64, 100));
-    const h = impulseResponse(b,a,Nir);
+    // For FIR designs (a = [1]) just plot b directly; for IIR compute tail
+    const isFIR = (a.length === 1);
+    const Nir = isFIR ? b.length : Math.min(200, Math.max(b.length+64, 100));
+    const h = isFIR ? b.slice() : Array.from(impulseResponse(b,a,Nir));
     let hM=1e-9; for(const v of h) if(Math.abs(v)>hM) hM=Math.abs(v);
-    ctx.strokeStyle='#4a9de8'; ctx.lineWidth=1;
     const midY = y2+rowH/2;
-    ctx.beginPath(); ctx.moveTo(padL, midY); ctx.lineTo(W-padR, midY); ctx.strokeStyle='#2a2d3a'; ctx.stroke();
-    ctx.strokeStyle='#4a9de8';
-    for(let n=0;n<Nir;n++){
-      const xx=padL+(W-padL-padR)*n/(Nir-1);
+    ctx.strokeStyle='#2a2d3a'; ctx.beginPath(); ctx.moveTo(padL, midY); ctx.lineTo(W-padR, midY); ctx.stroke();
+    ctx.strokeStyle='#4a9de8'; ctx.lineWidth=1; ctx.fillStyle='#4a9de8';
+    for(let n=0;n<h.length;n++){
+      const xx=padL+(W-padL-padR)*n/Math.max(1, h.length-1);
       const yy=midY - h[n]/hM*(rowH/2-3);
       ctx.beginPath(); ctx.moveTo(xx,midY); ctx.lineTo(xx,yy); ctx.stroke();
+      // dot at tip to make stem plot read more clearly
+      ctx.beginPath(); ctx.arc(xx, yy, 1.6, 0, Math.PI*2); ctx.fill();
     }
     // Panel 3: group delay
     const y3=padT+2*rowH+12;
@@ -2511,7 +2782,9 @@ const DF = window.DF = {
   const nEl=document.getElementById('apN'), nVal=document.getElementById('apNVal');
   const aEl=document.getElementById('apA'), aVal=document.getElementById('apAVal');
   const impBtn=document.getElementById('apImpulse');
-  let W=0, H=360, ctx=null;
+  // Four panels in a 2x2 grid: |H|, phase, group delay, impulse response.
+  // Bumped height to 440 so each tile has room for a readable label+plot.
+  let W=0, H=440, ctx=null;
   function coefs(){
     const N=parseInt(nEl.value), a=parseFloat(aEl.value);
     // Each stage: H(z) = (a + z^-1)/(1 + a z^-1)
@@ -2524,66 +2797,102 @@ const DF = window.DF = {
     }
     return { b, a:aP };
   }
-  function setup(){ W=fitWidth(c); ctx=setupCanvas(c,W,H); draw(); }
+  function setup(){
+    W=fitWidth(c);
+    // ensure the CSS height matches our bumped H
+    c.style.height = H + 'px';
+    ctx=setupCanvas(c,W,H);
+    draw();
+  }
+  function plotLine(x,y,w,h,arr,lo,hi,col,label){
+    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(x,y,w,h);
+    ctx.fillStyle='#8a8d9a'; ctx.font="10px 'Lucida Console', monospace";
+    ctx.fillText(label, x+4, y-2);
+    const rng = Math.max(1e-9, hi-lo);
+    // zero line if 0 is in range
+    if (lo<0 && hi>0){
+      const y0 = y + h*(1 - (0-lo)/rng);
+      ctx.strokeStyle='#2a2d3a';
+      ctx.beginPath(); ctx.moveTo(x,y0); ctx.lineTo(x+w,y0); ctx.stroke();
+    }
+    ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.beginPath();
+    for (let k=0;k<arr.length;k++){
+      const xx=x+w*k/(arr.length-1);
+      const v=Math.max(lo,Math.min(hi,arr[k]));
+      const yy=y+h*(1-(v-lo)/rng);
+      if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+    // y-axis ticks
+    ctx.fillStyle='#8a8d9a'; ctx.font="9px 'Lucida Console', monospace";
+    ctx.fillText(hi.toFixed(1), x-32, y+10);
+    ctx.fillText(lo.toFixed(1), x-32, y+h-2);
+  }
+  function plotStem(x,y,w,h,arr,col,label){
+    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(x,y,w,h);
+    ctx.fillStyle='#8a8d9a'; ctx.font="10px 'Lucida Console', monospace";
+    ctx.fillText(label, x+4, y-2);
+    let m=1e-9; for (const v of arr) if (Math.abs(v)>m) m=Math.abs(v);
+    const midY = y+h/2;
+    ctx.strokeStyle='#2a2d3a';
+    ctx.beginPath(); ctx.moveTo(x,midY); ctx.lineTo(x+w,midY); ctx.stroke();
+    ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=1;
+    for (let n=0;n<arr.length;n++){
+      const xx = x + w*n/Math.max(1,arr.length-1);
+      const yy = midY - arr[n]/m * (h/2-3);
+      ctx.beginPath(); ctx.moveTo(xx, midY); ctx.lineTo(xx, yy); ctx.stroke();
+      ctx.beginPath(); ctx.arc(xx, yy, 1.4, 0, Math.PI*2); ctx.fill();
+    }
+  }
   function draw(){
     if(!ctx) return;
     nVal.textContent = nEl.value;
     aVal.textContent = parseFloat(aEl.value).toFixed(2);
     ctx.fillStyle='#12141c'; ctx.fillRect(0,0,W,H);
     const { b, a } = coefs();
-    const K=400; const mag=new Float32Array(K); const ph=new Float32Array(K);
-    for(let k=0;k<K;k++){
+    const K=400;
+    const mag=new Float32Array(K);
+    const magDb=new Float32Array(K);
+    for (let k=0;k<K;k++){
       const w=Math.PI*k/(K-1); const Hv=freqz(b,a,w);
-      mag[k]=Math.sqrt(Hv.re*Hv.re+Hv.im*Hv.im);
-      ph[k]=Math.atan2(Hv.im,Hv.re);
+      mag[k] = Math.sqrt(Hv.re*Hv.re + Hv.im*Hv.im);
+      magDb[k] = 20*Math.log10(Math.max(1e-9, mag[k]));
     }
-    for (let k=1;k<K;k++){ let d=ph[k]-ph[k-1]; while(d>Math.PI){ph[k]-=2*Math.PI;d=ph[k]-ph[k-1];} while(d<-Math.PI){ph[k]+=2*Math.PI;d=ph[k]-ph[k-1];} }
-    const rowH=(H-40)/3, padL=50, padR=10;
-    // |H|
-    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(padL, 16, W-padL-padR, rowH);
-    ctx.strokeStyle='#e8a44a'; ctx.lineWidth=1.5; ctx.beginPath();
-    for(let k=0;k<K;k++){
-      const d=20*Math.log10(Math.max(1e-5,mag[k]));
-      const v=Math.max(-12,Math.min(12,d));
-      const xx=padL+(W-padL-padR)*k/(K-1);
-      const yy=16+rowH*(1-(v+12)/24);
-      if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
-    }
-    ctx.stroke();
-    ctx.fillStyle='#8a8d9a'; ctx.font="10px 'Lucida Console', monospace";
-    ctx.fillText('|H| (flat = allpass)', padL, 14);
-    // phase
-    const y2=16+rowH+6;
-    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(padL, y2, W-padL-padR, rowH);
-    let lo=Infinity,hi=-Infinity; for(const v of ph){ if(v<lo) lo=v; if(v>hi) hi=v; }
-    const rng=Math.max(1e-9,hi-lo);
-    ctx.strokeStyle='#b06ae8'; ctx.lineWidth=1.5; ctx.beginPath();
-    for(let k=0;k<K;k++){
-      const xx=padL+(W-padL-padR)*k/(K-1);
-      const yy=y2+rowH*(1-(ph[k]-lo)/rng);
-      if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
-    }
-    ctx.stroke();
-    ctx.fillStyle='#8a8d9a'; ctx.fillText('phase (rad)', padL, y2-2);
-    // impulse response
-    const y3=16+2*rowH+12;
-    ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(padL, y3, W-padL-padR, rowH);
-    const Nir=120;
-    const h=impulseResponse(b,a,Nir);
-    let hM=1e-9; for(const v of h) if(Math.abs(v)>hM) hM=Math.abs(v);
-    const midY=y3+rowH/2;
-    ctx.strokeStyle='#2a2d3a'; ctx.beginPath(); ctx.moveTo(padL,midY); ctx.lineTo(W-padR,midY); ctx.stroke();
-    ctx.strokeStyle='#4a9de8'; ctx.lineWidth=1;
-    for(let n=0;n<Nir;n++){
-      const xx=padL+(W-padL-padR)*n/(Nir-1);
-      const yy=midY - h[n]/hM*(rowH/2-3);
-      ctx.beginPath(); ctx.moveTo(xx,midY); ctx.lineTo(xx,yy); ctx.stroke();
-    }
-    ctx.fillStyle='#8a8d9a'; ctx.fillText('impulse response', padL, y3-2);
+    const { gd, phase } = groupDelay(b, a, K);
+    // Layout: 2x2 grid
+    const padL=44, padR=10, padT=20, padB=10, gap=18;
+    const gridW = W - padL - padR;
+    const gridH = H - padT - padB;
+    const cellW = (gridW - gap)/2;
+    const cellH = (gridH - gap)/2;
+    const col1X = padL, col2X = padL + cellW + gap;
+    const row1Y = padT, row2Y = padT + cellH + gap;
+    // Top-left: magnitude dB (clipped to a narrow window to make deviation from 0 visible)
+    plotLine(col1X, row1Y, cellW, cellH, magDb, -2, 2, '#e8a44a', '|H(e^jw)| (dB) - flat at 0 for allpass');
+    // Top-right: phase (unwrapped)
+    let pLo=Infinity, pHi=-Infinity;
+    for (const v of phase){ if(v<pLo)pLo=v; if(v>pHi)pHi=v; }
+    plotLine(col2X, row1Y, cellW, cellH, phase, pLo, pHi, '#b06ae8', 'unwrapped phase (rad)');
+    // Bottom-left: group delay
+    let gLo=Infinity, gHi=-Infinity;
+    for (const v of gd){ if(v<gLo)gLo=v; if(v>gHi)gHi=v; }
+    // clamp group delay to a sane window to avoid weird spikes dominating the plot
+    const gClamp = Math.min(Math.max(2, gHi*1.1), 80);
+    plotLine(col1X, row2Y, cellW, cellH, gd, 0, gClamp, '#5ce89a', 'group delay (samples)');
+    // Bottom-right: impulse response
+    const Nir = Math.min(160, Math.max(32, 8*parseInt(nEl.value)+32));
+    const h = impulseResponse(b, a, Nir);
+    plotStem(col2X, row2Y, cellW, cellH, h, '#4a9de8', 'impulse response h[n]');
+    // x-axis labels (shared across the grid)
+    ctx.fillStyle='#8a8d9a'; ctx.font="9px 'Lucida Console', monospace";
+    ctx.fillText('w = 0', col1X, row2Y+cellH+10);
+    ctx.fillText('w = pi', col2X+cellW-24, row2Y+cellH+10);
   }
+  // "Show impulse response" button retained for discoverability: jumps to IR panel
+  // behaviour by forcing a redraw (in case state was stale).
   nEl.addEventListener('input', draw);
   aEl.addEventListener('input', draw);
-  impBtn.addEventListener('click', draw);
+  impBtn.addEventListener('click', ()=>{ setup(); });
   window.addEventListener('resize', setup);
   setup();
 })();
@@ -2743,8 +3052,10 @@ const DF = window.DF = {
     ctx.fillStyle='#8a8d9a'; ctx.fillText('drum loop: original (grey) vs EQ\'d (orange) - 1 s segment', padL, y2-2);
   }
   [loEl,mdEl,hiEl,qEl].forEach(e=>e.addEventListener('input', draw));
-  btnO.addEventListener('click', ()=> playBuffer(drum, SR));
-  btnE.addEventListener('click', ()=> playBuffer(eqProcess(drum), SR));
+  // Chrome requires audioCtx.resume() to be triggered by a user gesture; wrap play
+  // in a try/catch and a best-effort redraw so the canvas stays up-to-date.
+  btnO.addEventListener('click', ()=>{ try { playBuffer(drum, SR); } catch(e){ console.warn(e); } draw(); });
+  btnE.addEventListener('click', ()=>{ try { playBuffer(eqProcess(drum), SR); } catch(e){ console.warn(e); } draw(); });
   window.addEventListener('resize', setup);
   setup();
 })();

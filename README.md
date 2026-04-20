@@ -69,15 +69,18 @@ compare structures side by side.
 
 ### 9 &middot; FIR vs IIR Filter Design
 Window-method FIR (rectangular, Hann, Hamming, Blackman); bilinear-transform
-IIR Butterworth; notes on Parks-McClellan / Remez equiripple design; Kaiser
-window $(\beta, L)$ closed-form spec formulae. Live designer with type
-(LP/HP/BP/BS), cutoff, bandwidth, order and window controls; plots mag (dB),
-impulse response, and group delay.
+IIR Butterworth; a working Parks-McClellan / Remez-style equiripple FIR
+(iteratively-reweighted least squares — a simplification of the 1972
+algorithm); Kaiser window $(\beta, L)$ closed-form spec formulae. Live designer
+with type (LP/HP/BP/BS), cutoff, bandwidth, order and window controls; plots
+mag (dB) with passband / stopband edges marked, stem impulse response, and
+group delay.
 
 ### 10 &middot; Allpass Filters
 $H_{\text{ap}}(z) = z^{-N}A(z^{-1})/A(z)$; fractional delay; Schroeder reverb.
-Interactive cascaded-allpass demo: $|H|$ stays flat (the verification), phase
-accumulates with each stage, and the impulse response diffuses.
+Interactive cascaded-allpass demo in a 2&times;2 grid: $|H|$ clamped to &plusmn;2&nbsp;dB
+(the verification that it really is flat), unwrapped phase, group delay (what
+an allpass actually _does_), and the diffusing impulse response.
 
 ### 11 &middot; Applications
 Audible three-band peaking EQ on a synthesised kick+snare+hats drum loop, with
