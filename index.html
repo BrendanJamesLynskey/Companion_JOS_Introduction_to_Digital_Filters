@@ -1350,8 +1350,10 @@ const DF = window.DF = {
     ctx.strokeStyle='rgba(74,157,232,0.85)'; ctx.lineWidth=1.5;
     ctx.beginPath();
     const N = 120;
+    const sinA = Math.sin(ang) || 1e-9;
     for (let n=0;n<N;n++){
-      const h = Math.pow(r,n)*Math.cos(ang*n);
+      // True 2-pole IR for poles r*e^{+/-j*ang}: h[n] = r^n*sin((n+1)*ang)/sin(ang)
+      const h = Math.pow(r,n)*Math.sin((n+1)*ang)/sinA;
       const xx = ox + ow*n/N;
       const yy = oy + oh/2 - h*oh*0.42;
       if (n===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
@@ -1406,31 +1408,39 @@ const DF = window.DF = {
     const ox=pw, oy=0, ow=pw, oh=H;
     ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(ox+8,oy+18,ow-16,oh-30);
     const N=140;
+    // True 2-pole IR for poles at r·e^{±ja}: h[n] = r^n·sin((n+1)a)/sin a.
+    // The earlier r^n·cos(an) approximation got the shape near n=0
+    // wrong (and was decorative-only).
     ctx.strokeStyle='#4a9de8'; ctx.beginPath();
+    const sinA = Math.sin(a) || 1e-9;
     for (let n=0;n<N;n++){
-      const h=Math.pow(r,n)*Math.cos(a*n);
+      const h=Math.pow(r,n)*Math.sin((n+1)*a)/sinA;
       const xx=ox+8+(ow-16)*n/N;
       const yy=oy+18+(oh-30)/2 - h*(oh-30)*0.42;
       if(n===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
     }
     ctx.stroke();
     ctx.fillStyle='#8a8d9a'; ctx.fillText('impulse response', ox+8, 14);
-    // magnitude response
+    // Magnitude response, fixed dB axis so the resonance peak visibly
+    // grows as r->1. Auto-normalising by maxM hid this: every r looked
+    // like the same flat hump.
     const mx=2*pw, my=0, mw=pw, mh=H;
     ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(mx+8,my+18,mw-16,mh-30);
     const b=[1], aCoef=[1, -2*r*Math.cos(a), r*r];
     const K=180;
-    let maxM=0; const mag=new Float32Array(K);
+    const mag=new Float32Array(K);
     for (let k=0;k<K;k++){
       const w=Math.PI*k/(K-1);
       const Hv=freqz(b,aCoef,w);
       mag[k]=Math.sqrt(Hv.re*Hv.re+Hv.im*Hv.im);
-      if (mag[k]>maxM) maxM=mag[k];
     }
+    const dbLo = -40, dbHi = 40;
     ctx.strokeStyle='#5ce89a'; ctx.beginPath();
     for (let k=0;k<K;k++){
+      const db = 20*Math.log10(Math.max(1e-6, mag[k]));
+      const v = Math.max(dbLo, Math.min(dbHi, db));
       const xx=mx+8+(mw-16)*k/(K-1);
-      const yy=my+18+(mh-30) - (mag[k]/maxM)*(mh-30);
+      const yy=my+18+(mh-30) - ((v-dbLo)/(dbHi-dbLo))*(mh-30);
       if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
     }
     ctx.stroke();
@@ -1703,13 +1713,19 @@ const DF = window.DF = {
     // Panel 1: magnitude
     panelFrame(rx, 6, rw, rh-4, '|H(e^jw)|'+(logEl.checked?' [dB]':''));
     ctx.strokeStyle='#e8a44a'; ctx.lineWidth=1.5; ctx.beginPath();
+    // Don't normalise by magMax in dB mode: the gain K slider multiplies
+    // every b coefficient by K, so dividing by magMax cancels K and the
+    // slider does nothing visible. Use an absolute dB axis instead.
+    // Linear mode keeps a relative scale (it's hard to pick an absolute
+    // reference for arbitrary user-placed PZs).
+    const dbLo = -60, dbHi = 20;
     for (let k=0;k<K2;k++){
       const xx = rx+4 + (rw-8)*k/(K2-1);
       let yy;
       if (logEl.checked){
-        const db = 20*Math.log10(Math.max(1e-6, mag[k]/magMax));
-        const v = Math.max(-60, Math.min(0, db));
-        yy = 6+18 + (rh-4-24)*(1 - (v+60)/60);
+        const db = 20*Math.log10(Math.max(1e-6, mag[k]));
+        const v = Math.max(dbLo, Math.min(dbHi, db));
+        yy = 6+18 + (rh-4-24)*(1 - (v-dbLo)/(dbHi-dbLo));
       } else {
         yy = 6+18 + (rh-4-24)*(1 - mag[k]/magMax);
       }
@@ -1742,13 +1758,18 @@ const DF = window.DF = {
       if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
     }
     ctx.stroke();
-    // Panel 4: impulse response
+    // Panel 4: impulse response. Clip to the panel rect so an unstable
+    // user PZ configuration doesn't paint diverging stems outside the
+    // box. Also -- when unstable -- the |max| auto-scaling makes the
+    // diverging IR look bounded, contradicting the UNSTABLE label.
     const py2 = 6 + 3*rh;
     panelFrame(rx, py2, rw, rh-4, 'impulse response h[n]');
     const Nir = 128;
     const h = impulseResponse(b, a, Nir);
     let hMax = 1e-9;
     for (const v of h) if (Math.abs(v)>hMax) hMax=Math.abs(v);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(rx, py2+14, rw, (rh-4)-14); ctx.clip();
     ctx.strokeStyle='#4a9de8'; ctx.lineWidth=1;
     for (let n=0;n<Nir;n++){
       const xx = rx+4 + (rw-8)*n/(Nir-1);
@@ -1756,6 +1777,7 @@ const DF = window.DF = {
       const yy = yy0 - h[n]/hMax * ((rh-4-24)/2 - 2);
       ctx.beginPath(); ctx.moveTo(xx,yy0); ctx.lineTo(xx,yy); ctx.stroke();
     }
+    ctx.restore();
     eqEl.textContent = formatCoeffs(b, a);
   }
   function panelFrame(x,y,w,h,label){
@@ -1901,18 +1923,20 @@ const DF = window.DF = {
     const K=arr.length;
     let lo=Infinity, hi=-Infinity;
     if (mode==='db'){
-      let M=1e-12; for(const v of arr) if(v>M) M=v;
-      lo=-60; hi=6;
+      // Don't normalise by max in dB mode -- otherwise every filter
+      // pegs at 0 dB and a +8 dB peak looks identical to a 0 dB notch.
+      // Use a fixed absolute axis so peak/gain differences read.
+      lo=-60; hi=20;
       ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.beginPath();
       for (let k=0;k<K;k++){
-        const d=20*Math.log10(Math.max(1e-6,arr[k]/M));
+        const d=20*Math.log10(Math.max(1e-6,arr[k]));
         const dd=Math.max(lo,Math.min(hi,d));
         const xx=x+w*k/(K-1);
         const yy=y+h*(1-(dd-lo)/(hi-lo));
         if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
       }
       ctx.stroke();
-      ctx.fillStyle='#8a8d9a'; ctx.fillText('0', x-18, y+10);
+      ctx.fillStyle='#8a8d9a'; ctx.fillText('+20', x-22, y+10);
       ctx.fillText('-60', x-22, y+h-2);
     } else {
       for(const v of arr){ if(v<lo) lo=v; if(v>hi) hi=v; }
@@ -2001,14 +2025,18 @@ const DF = window.DF = {
     return { b:[1], a:[1], zeros:[], poles:[] };
   }
   function polesFromA(a){
-    // For quadratic 1 + a1 z^-1 + a2 z^-2, poles are roots of z^2 + a1 z + a2 = 0
+    // Roots of a[0] + a[1] z^-1 + a[2] z^-2 = 0. Normalise by a[0] first
+    // so callers can pass the raw numerator [b0,b1,b2] (unnormalised) to
+    // get its zeros -- the previous version ignored a[0] and returned
+    // wrong roots for peak/lsh/hsh whose b polynomial has b0 != 1.
     if (a.length===3){
-      const a1=a[1], a2=a[2];
-      const d=a1*a1 - 4*a2;
+      const a0 = a[0] || 1;
+      const a1 = a[1]/a0, a2 = a[2]/a0;
+      const d = a1*a1 - 4*a2;
       if (d>=0){ const sd=Math.sqrt(d); return [{re:(-a1+sd)/2, im:0}, {re:(-a1-sd)/2, im:0}]; }
       const sd=Math.sqrt(-d); return [{re:-a1/2, im:sd/2}, {re:-a1/2, im:-sd/2}];
     }
-    if (a.length===2) return [{re:-a[1], im:0}];
+    if (a.length===2){ const a0 = a[0] || 1; return [{re:-a[1]/a0, im:0}]; }
     return [];
   }
   function setup(){ W=fitWidth(c); ctx=setupCanvas(c,W,H); draw(); }
@@ -2139,19 +2167,22 @@ const DF = window.DF = {
     ctx.strokeStyle='#2a2d3a'; ctx.strokeRect(mx,my,mww,mhh);
     const K=256;
     const bRef=[1, -2*(1/r)*Math.cos(a), 1/(r*r)];
-    // Normalise both by their peak to show magnitudes on the same scale
+    // Compute both magnitudes; use a SHARED max so the curves overlay
+    // exactly (which is the whole point of the demo: |H_orig| and
+    // |H_reflected| differ only by a constant gain factor of r^N).
+    // Per-curve normalisation hid that gain difference visually.
     function computeMag(bb){
       const arr=new Float32Array(K); let M=1e-9;
       for(let k=0;k<K;k++){ const w=Math.PI*k/(K-1); const Hv=freqz(bb,[1],w); arr[k]=Math.sqrt(Hv.re*Hv.re+Hv.im*Hv.im); if(arr[k]>M) M=arr[k]; }
       return { arr, M };
     }
     const m1=computeMag(b), m2=computeMag(bRef);
-    // Normalise each, draw
+    const mShared = Math.max(m1.M, m2.M);
     ctx.strokeStyle='#e8a44a'; ctx.lineWidth=1.5; ctx.beginPath();
-    for(let k=0;k<K;k++){ const xx=mx+mww*k/(K-1); const yy=my+mhh*(1-m1.arr[k]/m1.M); if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); }
+    for(let k=0;k<K;k++){ const xx=mx+mww*k/(K-1); const yy=my+mhh*(1-m1.arr[k]/mShared); if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); }
     ctx.stroke();
     ctx.strokeStyle='#4a9de866'; ctx.setLineDash([5,3]); ctx.beginPath();
-    for(let k=0;k<K;k++){ const xx=mx+mww*k/(K-1); const yy=my+mhh*(1-m2.arr[k]/m2.M); if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); }
+    for(let k=0;k<K;k++){ const xx=mx+mww*k/(K-1); const yy=my+mhh*(1-m2.arr[k]/mShared); if(k===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); }
     ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle='#8a8d9a'; ctx.fillText('|H| (solid) vs |H_reflected| (dashed) — identical shape', ph+8, 14);
     // Right lower: phase
@@ -2490,8 +2521,11 @@ const DF = window.DF = {
       const theta = Math.PI*(2*k + 1 + N)/(2*N);
       aPoles.push({re:Math.cos(theta), im:Math.sin(theta)});
     }
-    // scale for cutoff
-    const sc = wc/2; // approx (we will pass to bilinear s = (2/T)(1-z^-1)/(1+z^-1), T=1)
+    // scale for cutoff. With the bilinear z = (2+s)/(2-s) below (i.e.
+    // T=1), the prototype poles must scale by the FULL pre-warped Wc,
+    // not Wc/2. The earlier sc = wc/2 produced a Butterworth whose -3 dB
+    // point landed at fc/2 instead of fc.
+    const sc = wc;
     // Apply transform sp = (aPole * cutoff) -> LP transform s/sc; then bilinear.
     // Using T=1: z = (2+s)/(2-s) for s = aPole*sc
     const dPoles = aPoles.map(p=>{
@@ -2522,9 +2556,13 @@ const DF = window.DF = {
       const ga = aa.reduce((s,v,i)=>s+v*((i%2)?-1:1),0);
       b = bb.map(v=>v/(gb/ga)); a = aa;
     } else {
-      // bp / bs fallback: produce a LP and warn
+      // bp / bs not implemented for the bilinear-Butterworth path.
+      // Previously this silently returned a LP, so users picking BP/BS
+      // got an unannounced different filter. Return a flag so the
+      // caller can label the readout instead.
       const gb = b.reduce((s,v)=>s+v,0), ga = a.reduce((s,v)=>s+v,0);
       b = b.map(v=>v/(gb/ga));
+      return { b, a, note: 'BP/BS not implemented for Butterworth -- showing LP' };
     }
     return { b, a };
   }
@@ -3052,10 +3090,21 @@ const DF = window.DF = {
     ctx.fillStyle='#8a8d9a'; ctx.fillText('drum loop: original (grey) vs EQ\'d (orange) - 1 s segment', padL, y2-2);
   }
   [loEl,mdEl,hiEl,qEl].forEach(e=>e.addEventListener('input', draw));
+  // Peak-match the wet buffer to the dry one before playback so heavy
+  // boost settings don't clip and heavy cut settings don't sound
+  // quieter -- A/B is meaningful only at matched level.
+  function peakMatched(buf, ref){
+    let m = 1e-9; for(let i=0;i<buf.length;i++) if(Math.abs(buf[i])>m) m = Math.abs(buf[i]);
+    let r = 1e-9; for(let i=0;i<ref.length;i++) if(Math.abs(ref[i])>r) r = Math.abs(ref[i]);
+    const g = r/m;
+    const out = new Float32Array(buf.length);
+    for(let i=0;i<buf.length;i++) out[i] = buf[i]*g;
+    return out;
+  }
   // Chrome requires audioCtx.resume() to be triggered by a user gesture; wrap play
   // in a try/catch and a best-effort redraw so the canvas stays up-to-date.
   btnO.addEventListener('click', ()=>{ try { playBuffer(drum, SR); } catch(e){ console.warn(e); } draw(); });
-  btnE.addEventListener('click', ()=>{ try { playBuffer(eqProcess(drum), SR); } catch(e){ console.warn(e); } draw(); });
+  btnE.addEventListener('click', ()=>{ try { playBuffer(peakMatched(eqProcess(drum), drum), SR); } catch(e){ console.warn(e); } draw(); });
   window.addEventListener('resize', setup);
   setup();
 })();
